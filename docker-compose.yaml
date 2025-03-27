@@ -4,15 +4,17 @@ services:
     ports:
       - "8983:8983"
     networks: [search]
-    volumes:
-      - $PWD/var/solr:/var/solr
     environment:
       ZK_HOST: "zoo:2181"
+    volumes:
+      - $PWD/var/solr:/var/solr
     depends_on: [zoo]
 
   zoo:
     image: zookeeper:3.9
     networks: [search]
+    ports:
+    - 2181:2181
     environment:
       ZOO_4LW_COMMANDS_WHITELIST: "mntr,conf,ruok"
 
