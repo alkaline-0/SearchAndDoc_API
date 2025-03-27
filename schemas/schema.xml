@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<schema name="vault" version="1.5">
+    <fields>
+        <fieldType name="message_id" class="solr.TrieIntField" indexed="true" stored="true" required="true" precisionStep="0" positionIncrementGap="0" multiValued="false">
+        <fieldType name="author_id" class="solr.TrieIntField" indexed="true" stored="true" required="true" precisionStep="0" positionIncrementGap="0" multiValued="false">
+        <fieldType name="channel_id" class="solr.TrieIntField" indexed="true" stored="true" required="true" precisionStep="0" positionIncrementGap="0" multiValued="false">
+        <fieldType name="created_at" class="solr.TrieDateField" multiValued="false">
+        <fieldType name="message_content" class="solr.TextField" autoGeneratePhraseQueries="true" enableGraphQueries="true" indexed="true" stored="true" required="true" multiValued="false">
+        <!-- Configures the analysis done at the index phase -->
+          <analyzer type="index">
+              <!-- Uses word break rules of the Unicode Text Segmentation algorith when splitting text into words. -->
+              <tokenizer class="solr.StandardTokenizerFactory"/>
+              <!-- Removes words found from stopwords.txt file. This filter is case insensitive. -->
+              <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" enablePositionIncrements="true" />
+              <!-- Transforms text to lower case -->
+              <filter class="solr.LowerCaseFilterFactory"/>
+          </analyzer>
+          <!-- Configures the analysis done at the query time -->
+          <analyzer type="query">
+              <!-- Uses word break rules of the Unicode Text Segmentation algorith when splitting text into words. -->
+              <tokenizer class="solr.StandardTokenizerFactory"/>
+              <!-- Removes words found from stopwords.txt file. This filter is case insensitive. -->
+              <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" enablePositionIncrements="true" />
+              <!-- Applies synonyms found from the synonyms.txt file. -->
+              <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+              <!-- Transforms text to lower case -->
+              <filter class="solr.LowerCaseFilterFactory"/>
+          </analyzer>
+        </fieldType>
+
+
+    </fields>
+
+    <!-- Configure unique key -->
+    <uniqueKey>message_id</uniqueKey>
+</schema>

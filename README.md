@@ -10,8 +10,8 @@ Discord app that enhances the search feature and utilizes LLMs to create documen
 
 ```shell
 # To delete virtual env:
-pyenv virtualenv-delete <venv-name> 
-# or 
+pyenv virtualenv-delete <venv-name>
+# or
 pyenv uninstall 3.9.21/envs/pyenv-3.9.21 (python-version/envs/name_of_virtual_env)
 
 # To install python3.9.20:
