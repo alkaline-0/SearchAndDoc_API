@@ -1,0 +1,15 @@
+{
+  "authentication": {
+    "blockUnknown": true,
+    "class": "solr.BasicAuthPlugin",
+    "credentials": {
+      "account_name": "SALT HASH"
+    },
+    "realm": "My Solr users"
+  },
+  "authorization": {
+    "class": "solr.RuleBasedAuthorizationPlugin",
+    "permissions": [{ "name": "security-edit", "role": "admin" }],
+    "user-role": { "account_name": "admin" }
+  }
+}

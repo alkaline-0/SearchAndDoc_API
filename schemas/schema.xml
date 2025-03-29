@@ -4,7 +4,7 @@
         <fieldType name="message_id" class="solr.TrieIntField" indexed="true" stored="true" required="true" precisionStep="0" positionIncrementGap="0" multiValued="false">
         <fieldType name="author_id" class="solr.TrieIntField" indexed="true" stored="true" required="true" precisionStep="0" positionIncrementGap="0" multiValued="false">
         <fieldType name="channel_id" class="solr.TrieIntField" indexed="true" stored="true" required="true" precisionStep="0" positionIncrementGap="0" multiValued="false">
-        <fieldType name="created_at" class="solr.TrieDateField" multiValued="false">
+        <fieldType name="created_at" class="solr.TrieDateField" multiValued="false" required="true">
         <fieldType name="message_content" class="solr.TextField" autoGeneratePhraseQueries="true" enableGraphQueries="true" indexed="true" stored="true" required="true" multiValued="false">
         <!-- Configures the analysis done at the index phase -->
           <analyzer type="index">
