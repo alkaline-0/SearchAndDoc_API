@@ -1,5 +1,6 @@
+import inspect
 import json
-from typing import Any, Dict
+from typing import Any
 
 import pysolr
 import requests
@@ -41,14 +42,14 @@ class Solr:
         self._config_name = "solrconfig.xml"
         self._schema_name = "managed-schema.xml"
 
-    def create_collection(self, collection_name: str) -> dict[str, Any] | None:
+    def create_collection(self, collection_name: str) -> Any:
         """Creates a new Solr collection.
 
         Args:
             collection_name: Name of collection to create
 
         Returns:
-            Dict containing Solr response on success, None if collection exists
+            Python object containing Solr response on success, None if collection exists
 
         Raises:
             requests.exceptions.HTTPError: If Solr request fails
@@ -67,7 +68,7 @@ class Solr:
 
     def create_new_core(
         self, discord_server_id: str, collection_name: str = "vault"
-    ) -> Dict[str, Any]:
+    ) -> Any:
         """Creates a new Solr core.
 
         Args:
@@ -75,7 +76,7 @@ class Solr:
             collection_name: Name of collection to associate with core
 
         Returns:
-            Dict containing Solr response
+            Python object with Solr response on success, None if core exists
 
         Raises:
             requests.exceptions.HTTPError: If Solr request fails
@@ -121,7 +122,7 @@ class Solr:
         res = self._make_solr_request(url=self._collection_conn_url, params=params)
         return collection_name in res["collections"]
 
-    def _make_solr_request(self, url: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _make_solr_request(self, url: str, params: dict[str]) -> Any:
         """Makes HTTP request to Solr and handles response.
 
         Args:
@@ -129,7 +130,7 @@ class Solr:
             params: Request parameters
 
         Returns:
-            Dict containing parsed JSON response
+            Python object containing parsed JSON response with the result of the request
 
         Raises:
             requests.exceptions.HTTPError: If request fails
@@ -145,7 +146,8 @@ class Solr:
             return json.loads(pysolr.force_unicode(response.content))
 
         except requests.exceptions.HTTPError as error:
-            print(f"Solr request failed originating from {params['action']}: {error}")
+            caller_frame = inspect.getouterframes(inspect.currentframe(), 2)
+            print(f"Solr request failed originating from {caller_frame[1][3]}: {error}")
             raise
         except Exception as error:
             print(f"Unexpected error occurred: {error}")
