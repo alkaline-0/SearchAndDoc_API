@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<schema name="vault" version="1.5">
+    <types>
+    <fieldType name="booleans" class="solr.BoolField" sortMissingLast="true"/>
+    <fieldType name="string" class="solr.StrField" sortMissingLast="true" indexed="true" stored="true"/>
+    <fieldType name="text" class="solr.TextField" sortMissingLast="true" indexed="true" stored="true"/>
+    <fieldType name="pints" class="solr.TrieIntField" positionIncrementGap="0" multiValued="false"/>
+    <fieldType name="pfloats" class="solr.TrieFloatField" positionIncrementGap="0" multiValued="false"/>
+    <fieldType name="pdoubles" class="solr.TrieDoubleField" positionIncrementGap="0" multiValued="false"/>
+    <fieldType name="plongs" class="solr.TrieLongField" positionIncrementGap="0" multiValued="false"/>
+    <fieldType name="pdates" class="DatePointField" multiValued="false"/>
+    <fieldType name="text_general" class="TextField" autoGeneratePhraseQueries="true" enableGraphQueries="true" multiValued="false"/>
+      <analyzer type="index">
+            <!-- Uses word break rules of the Unicode Text Segmentation algorith when splitting text into words. -->
+            <tokenizer type="StandardTokenizerFactory"/>
+            <!-- Removes words found from stopwords.txt file. This filter is case insensitive. -->
+            <filter type="StopFilterFactory" ignoreCase="true" words="stopwords.txt" enablePositionIncrements="true" />
+            <!-- Transforms text to lower case -->
+            <filter type="LowerCaseFilterFactory"/>
+        </analyzer>
+        <!-- Configures the analysis done at the query time -->
+        <analyzer type="query">
+            <!-- Uses word break rules of the Unicode Text Segmentation algorith when splitting text into words. -->
+            <tokenizer type="StandardTokenizerFactory"/>
+            <!-- Removes words found from stopwords.txt file. This filter is case insensitive. -->
+            <filter type="StopFilterFactory" ignoreCase="true" words="stopwords.txt" enablePositionIncrements="true" />
+            <!-- Applies synonyms found from the synonyms.txt file. -->
+            <filter type="SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+            <!-- Transforms text to lower case -->
+            <filter type="LowerCaseFilterFactory"/>
+        </analyzer>
+    </types>
+    <fields>
+        <field name="message_id" type="plongs" indexed="true" stored="true" required="true"/>
+        <field name="author_id" type="plongs" indexed="true" stored="true" required="true"/>
+        <field name="channel_id" type="plongs" indexed="true" stored="true" required="true"/>
+        <field name="created_at" type="pdates" required="true"/>
+        <field name="message_content" type="text_general" indexed="true" stored="true" required="true"/>
+        <field name="_version_" type="plongs" indexed="true" stored="true" multiValued="false"/>
+    </fields>
+    <!-- Configure unique key -->
+    <uniqueKey>message_id</uniqueKey>
+</schema>
