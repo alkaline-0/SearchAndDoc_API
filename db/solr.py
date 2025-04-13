@@ -33,7 +33,14 @@ class Solr:
             password: Authentication password
             solr_host: Solr host address
             solr_port: Solr port number
+
+        Raises:
+            ValueError: If any required params are empty
+            ConnectionError: If unable to connect to Solr
         """
+        if not all([user_name, password, solr_host, solr_port]):
+            raise ValueError("All connection parameters are required")
+
         self._user_name = user_name
         self._password = password
         self._construct_url(solr_host=solr_host, solr_port=solr_port)
@@ -55,7 +62,12 @@ class Solr:
             requests.exceptions.HTTPError: If Solr request fails
             Exception: For other unexpected errors
         """
-        if self._collection_exist(collection_name):
+
+        if not collection_name:
+            raise ValueError("Collection name cannot be empty")
+
+        if self.collection_exist(collection_name):
+            # TODO: log failure of collection creation
             return None
 
         params = {
@@ -64,7 +76,7 @@ class Solr:
             "numShards": 1,
             "collection.configName": self._config_name,
         }
-        return self._make_solr_request(url=self._admin_url, params=params)
+        return self._make_solr_request(url=self._collection_conn_url, params=params)
 
     def create_new_core(
         self, discord_server_id: str, collection_name: str = "vault"
@@ -105,7 +117,7 @@ class Solr:
         self._admin_url = f"{self._conn_url}/admin/cores"
         self._collection_conn_url = f"{self._conn_url}/admin/collections"
 
-    def _collection_exist(self, collection_name: str) -> bool:
+    def collection_exist(self, collection_name: str) -> bool:
         """Checks if a collection exists.
 
         Args:
