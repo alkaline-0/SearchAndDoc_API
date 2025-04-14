@@ -1,6 +1,7 @@
 import inspect
 import json
 from typing import Any
+from urllib.parse import urljoin
 
 import pysolr
 import requests
@@ -276,17 +277,16 @@ class Solr:
             raise
 
     def _construct_url(self, solr_host: str, solr_port: str) -> None:
-        """Constructs Solr URLs from connection details.
+      """Constructs Solr URLs from connection details.
 
-        Args:
-            solr_host: Solr host address
-            solr_port: Solr port number
-        """
-        self._conn_url = (
-            f"http://{self._user_name}:{self._password}@{solr_host}:{solr_port}/solr"
-        )
-        self._admin_url = f"{self._conn_url}/admin/cores"
-        self._collection_conn_url = f"{self._conn_url}/admin/collections"
+      Args:
+          solr_host (str): Solr host address.
+          solr_port (str): Solr port number.
+      """
+      base_url = f"http://{self._user_name}:{self._password}@{solr_host}:{solr_port}/"
+      self._conn_url = urljoin(base_url, "solr")
+      self._admin_url = urljoin(self._conn_url + "/", "admin/cores")
+      self._collection_conn_url = urljoin(self._conn_url + "/", "admin/collections")
 
     def _validate_index_params(
         self, data: list[dict[str, any]], core_name: str
