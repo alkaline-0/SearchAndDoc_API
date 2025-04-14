@@ -7,7 +7,7 @@ import pytest
 from db.solr import Solr
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def solr_test_client() -> Iterator[Solr]:
     """Create a Solr test client fixture.
 
@@ -22,3 +22,9 @@ def solr_test_client() -> Iterator[Solr]:
             solr_port=os.getenv("SOLR_PORT_TEST"),
         )
         yield client
+
+
+@pytest.fixture(autouse=True)
+def setup_and_teardown(solr_test_client):
+    yield
+    solr_test_client.delete_all_collections()

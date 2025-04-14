@@ -1,6 +1,7 @@
 import inspect
 import json
 from typing import Any
+from xmlrpc.client import Boolean
 
 import pysolr
 import requests
@@ -12,7 +13,6 @@ class Solr:
     Handles core and collection management operations against a Solr instance.
 
     Attributes:
-        _pysolr_obj: PySolr client instance
         _admin_url: URL for Solr admin API
         _user_name: Solr authentication username
         _password: Solr authentication password
@@ -40,11 +40,9 @@ class Solr:
         """
         if not all([user_name, password, solr_host, solr_port]):
             raise ValueError("All connection parameters are required")
-
         self._user_name = user_name
         self._password = password
         self._construct_url(solr_host=solr_host, solr_port=solr_port)
-        self._pysolr_obj = pysolr.Solr(self._conn_url, always_commit=True)
         self._instance_dir = "/opt/solr-8.11.1/server/solr"
         self._config_name = "solrconfig.xml"
         self._schema_name = "managed-schema.xml"
@@ -104,19 +102,6 @@ class Solr:
         }
         return self._make_solr_request(url=self._admin_url, params=params)
 
-    def _construct_url(self, solr_host: str, solr_port: str) -> None:
-        """Constructs Solr URLs from connection details.
-
-        Args:
-            solr_host: Solr host address
-            solr_port: Solr port number
-        """
-        self._conn_url = (
-            f"http://{self._user_name}:{self._password}@{solr_host}:{solr_port}/solr"
-        )
-        self._admin_url = f"{self._conn_url}/admin/cores"
-        self._collection_conn_url = f"{self._conn_url}/admin/collections"
-
     def collection_exist(self, collection_name: str) -> bool:
         """Checks if a collection exists.
 
@@ -133,6 +118,98 @@ class Solr:
         params = {"action": "LIST"}
         res = self._make_solr_request(url=self._collection_conn_url, params=params)
         return collection_name in res["collections"]
+
+    def index_data(self, data: list[dict], core_name: str, soft_commit: Boolean) -> Any:
+        """Indexes data into a Solr core.
+
+        Args:
+            data: Data to index
+            core_name: Name of Solr core
+
+        Returns:
+            Python object with Solr response
+
+        Raises:
+            requests.exceptions.HTTPError: If Solr request fails
+            Exception: For other unexpected errors
+        """
+        if not core_name:
+            raise ValueError("Core name cannot be empty")
+        if not data:
+            raise ValueError("Data to index cannot be empty")
+        if not self.core_exist(core_name):
+            raise ValueError("Core does not exist")
+
+        core_url = self._conn_url + "/" + core_name
+        pysolr_obj = pysolr.Solr(core_url)
+        try:
+            pysolr_obj.add(data, softCommit=soft_commit)
+        except requests.exceptions.HTTPError as error:
+            print(f"Failed to index data in Solr core '{core_name}': {error}")
+            raise error
+
+    def core_exist(self, core_name: str) -> bool:
+        """Checks if a Solr core exists.
+
+        Args:
+            core_name: Name of core to check
+
+        Returns:
+            True if core exists, False otherwise
+
+        Raises:
+            requests.exceptions.HTTPError: If Solr request fails
+            Exception: For other unexpected errors
+        """
+        params = {"action": "STATUS", core_name: core_name}
+        res = self._make_solr_request(url=self._admin_url, params=params)
+        return core_name in res["status"]
+
+    def delete_all_collections(self) -> None:
+        try:
+            params = {"action": "LIST"}
+            res = self._make_solr_request(url=self._collection_conn_url, params=params)
+
+            for collection in res["collections"]:
+                params = {
+                    "action": "DELETE",
+                    "name": collection,
+                }
+                self._make_solr_request(url=self._collection_conn_url, params=params)
+                print(f"Collection '{collection}' deleted successfully.")
+        except requests.exceptions.HTTPError as error:
+            print(f"Failed to delete collection: {error}")
+            raise error
+
+    def select_soft_commited_docs(self, query: str, core_name: str) -> Any:
+        """Selects documents from a Solr core based on a query.
+
+        Args:
+            query: Query string to filter documents
+            core_name: Name of Solr core
+
+        Returns:
+            Python object with Solr response
+
+        Raises:
+            requests.exceptions.HTTPError: If Solr request fails
+            Exception: For other unexpected errors
+        """
+        if not core_name:
+            raise ValueError("Core name cannot be empty")
+        if not query:
+            raise ValueError("Query cannot be empty")
+        if not self.core_exist(core_name):
+            raise ValueError("Core does not exist")
+        try:
+            core_url = f"{self._conn_url}/{core_name}/select"
+            params = {"q": query}
+            response = self._make_solr_request(url=core_url, params=params)
+
+            return response
+        except requests.exceptions.HTTPError as error:
+            print(f"Failed to select documents from Solr core '{core_name}': {error}")
+            raise error
 
     def _make_solr_request(self, url: str, params: dict[str]) -> Any:
         """Makes HTTP request to Solr and handles response.
@@ -164,3 +241,16 @@ class Solr:
         except Exception as error:
             print(f"Unexpected error occurred: {error}")
             raise
+
+    def _construct_url(self, solr_host: str, solr_port: str) -> None:
+        """Constructs Solr URLs from connection details.
+
+        Args:
+            solr_host: Solr host address
+            solr_port: Solr port number
+        """
+        self._conn_url = (
+            f"http://{self._user_name}:{self._password}@{solr_host}:{solr_port}/solr"
+        )
+        self._admin_url = f"{self._conn_url}/admin/cores"
+        self._collection_conn_url = f"{self._conn_url}/admin/collections"
