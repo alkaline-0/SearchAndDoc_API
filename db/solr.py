@@ -1,10 +1,23 @@
 import inspect
 import json
 from typing import Any
-from xmlrpc.client import Boolean
 
 import pysolr
 import requests
+
+"""Solr configuration settings."""
+
+from dataclasses import dataclass
+
+
+@dataclass
+class SolrConfig:
+    """Solr configuration parameters."""
+
+    INSTANCE_DIR: str = "/opt/solr-8.11.1/server/solr"
+    CONFIG_NAME: str = "solrconfig.xml"
+    SCHEMA_NAME: str = "managed-schema.xml"
+    NUM_SHARDS: int = 1
 
 
 class Solr:
@@ -43,9 +56,9 @@ class Solr:
         self._user_name = user_name
         self._password = password
         self._construct_url(solr_host=solr_host, solr_port=solr_port)
-        self._instance_dir = "/opt/solr-8.11.1/server/solr"
-        self._config_name = "solrconfig.xml"
-        self._schema_name = "managed-schema.xml"
+        self._config_name = SolrConfig.CONFIG_NAME
+        self._instance_dir = SolrConfig.INSTANCE_DIR
+        self._schema_name = SolrConfig.SCHEMA_NAME
 
     def create_collection(self, collection_name: str) -> Any:
         """Creates a new Solr collection.
@@ -92,6 +105,8 @@ class Solr:
             requests.exceptions.HTTPError: If Solr request fails
             Exception: For other unexpected errors
         """
+        if not discord_server_id:
+            raise ValueError("Discord server ID cannot be empty")
         params = {
             "action": "CREATE",
             "name": discord_server_id,
@@ -119,7 +134,7 @@ class Solr:
         res = self._make_solr_request(url=self._collection_conn_url, params=params)
         return collection_name in res["collections"]
 
-    def index_data(self, data: list[dict], core_name: str, soft_commit: Boolean) -> Any:
+    def index_data(self, data: list[dict], core_name: str) -> Any:
         """Indexes data into a Solr core.
 
         Args:
@@ -133,17 +148,32 @@ class Solr:
             requests.exceptions.HTTPError: If Solr request fails
             Exception: For other unexpected errors
         """
-        if not core_name:
-            raise ValueError("Core name cannot be empty")
-        if not data:
-            raise ValueError("Data to index cannot be empty")
-        if not self.core_exist(core_name):
-            raise ValueError("Core does not exist")
+        self._validate_index_params(data, core_name)
 
         core_url = self._conn_url + "/" + core_name
         pysolr_obj = pysolr.Solr(core_url)
         try:
-            pysolr_obj.add(data, softCommit=soft_commit)
+            pysolr_obj.add(data, softCommit=True)
+        except requests.exceptions.HTTPError as error:
+            print(f"Failed to index data in Solr core '{core_name}': {error}")
+            raise error
+
+    def index_data_with_hard_commit(self, data: list[dict], core_name: str) -> Any:
+        """Indexes data into a Solr core with hard commit.
+        Args:
+            data: Data to index
+            core_name: Name of Solr core
+        Returns:
+            Python object with Solr response
+        Raises:
+            requests.exceptions.HTTPError: If Solr request fails
+            Exception: For other unexpected errors
+        """
+        self._validate_index_params(data, core_name)
+        core_url = self._conn_url + "/" + core_name
+        pysolr_obj = pysolr.Solr(core_url, always_commit=True)
+        try:
+            pysolr_obj.add(data, commit=True)
         except requests.exceptions.HTTPError as error:
             print(f"Failed to index data in Solr core '{core_name}': {error}")
             raise error
@@ -161,6 +191,9 @@ class Solr:
             requests.exceptions.HTTPError: If Solr request fails
             Exception: For other unexpected errors
         """
+        if not core_name:
+            raise ValueError("Core name cannot be empty")
+
         params = {"action": "STATUS", core_name: core_name}
         res = self._make_solr_request(url=self._admin_url, params=params)
         return core_name in res["status"]
@@ -181,7 +214,7 @@ class Solr:
             print(f"Failed to delete collection: {error}")
             raise error
 
-    def select_soft_commited_docs(self, query: str, core_name: str) -> Any:
+    def select_docs(self, query: str, core_name: str) -> Any:
         """Selects documents from a Solr core based on a query.
 
         Args:
@@ -254,3 +287,22 @@ class Solr:
         )
         self._admin_url = f"{self._conn_url}/admin/cores"
         self._collection_conn_url = f"{self._conn_url}/admin/collections"
+
+    def _validate_index_params(
+        self, data: list[dict[str, any]], core_name: str
+    ) -> None:
+        """Validate indexing parameters.
+
+        Args:
+            data: Data to index
+            core_name: Name of Solr core
+
+        Raises:
+            SolrValidationError: If parameters are invalid
+        """
+        if not core_name:
+            raise ValueError("Core name cannot be empty")
+        if not data:
+            raise ValueError("Data to index cannot be empty")
+        if not self.core_exist(core_name):
+            raise ValueError("Core does not exist")

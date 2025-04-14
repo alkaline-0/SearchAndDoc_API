@@ -104,31 +104,96 @@ class TestSolrCore:
             },
         ]
 
-        response = solr_test_client.select_soft_commited_docs(
-            query="*:*", core_name="test_core"
-        )
+        response = solr_test_client.select_docs(query="*:*", core_name="test_core")
         assert response is not None
         assert response["response"]["numFound"] == 0
-        solr_test_client.index_data(data=data, core_name="test_core", soft_commit=True)
+        solr_test_client.index_data(data=data, core_name="test_core")
 
-        response = solr_test_client.select_soft_commited_docs(
-            query="*:*", core_name="test_core"
-        )
-        print(response)
+        response = solr_test_client.select_docs(query="*:*", core_name="test_core")
         assert response is not None
         assert response["response"]["numFound"] == len(data)
 
     def test_failed_indexing_of_data_with_empty_core_name(self, solr_test_client):
         with pytest.raises(ValueError) as excinfo:
-            solr_test_client.index_data(data=["test"], core_name="", soft_commit=True)
+            solr_test_client.index_data(data=["test"], core_name="")
         assert "Core name cannot be empty" in str(excinfo.value)
 
     def test_failed_indexing_of_data_with_empty_data(self, solr_test_client):
         with pytest.raises(ValueError) as excinfo:
-            solr_test_client.index_data(data=[], core_name="test_core", soft_commit=True)
+            solr_test_client.index_data(data=[], core_name="test_core")
         assert "Data to index cannot be empty" in str(excinfo.value)
 
     def test_failed_indexing_of_data_with_non_existent_core(self, solr_test_client):
         with pytest.raises(ValueError) as excinfo:
-            solr_test_client.index_data(data=["test"], core_name="non_existent_core", soft_commit=True)
+            solr_test_client.index_data(data=["test"], core_name="non_existent_core")
         assert "Core does not exist" in str(excinfo.value)
+
+    def test_failed_indexing_hard_commit_with_empty_core_name(self, solr_test_client):
+        with pytest.raises(ValueError) as excinfo:
+            solr_test_client.index_data_with_hard_commit(data=["test"], core_name="")
+        assert "Core name cannot be empty" in str(excinfo.value)
+
+    def test_failed_indexing_hard_commit_with_empty_data(self, solr_test_client):
+        with pytest.raises(ValueError) as excinfo:
+            solr_test_client.index_data_with_hard_commit(data=[], core_name="test_core")
+        assert "Data to index cannot be empty" in str(excinfo.value)
+
+    def test_failed_indexing_hard_commit_non_existent_core(self, solr_test_client):
+        with pytest.raises(ValueError) as excinfo:
+            solr_test_client.index_data_with_hard_commit(
+                data=["test"], core_name="test_core"
+            )
+            assert "Data to index cannot be empty" in str(excinfo.value)
+
+    def test_successful_indexing_of_data_with_hard_commit(self, solr_test_client):
+        solr_test_client.create_collection("new_col")
+        res = solr_test_client.create_new_core("test_core", "new_col")
+        assert res is not None
+        assert res["responseHeader"]["status"] == 0
+
+        data = [
+            {
+                "message_id": 1,
+                "author_id": 101,
+                "channel_id": 10,
+                "message_content": "Hey everyone, good morning!",
+                "created_at": "2025-04-14T08:30:00Z",
+            },
+            {
+                "message_id": 2,
+                "author_id": 102,
+                "channel_id": 10,
+                "message_content": "Good morning! How's it going?",
+                "created_at": "2025-04-14T08:31:15Z",
+            },
+            {
+                "message_id": 3,
+                "author_id": 101,
+                "channel_id": 11,
+                "message_content": "Meeting starts in 10 minutes.",
+                "created_at": "2025-04-14T08:32:00Z",
+            },
+            {
+                "message_id": 4,
+                "author_id": 103,
+                "channel_id": 11,
+                "message_content": "Got it, thanks for the heads-up!",
+                "created_at": "2025-04-14T08:33:20Z",
+            },
+            {
+                "message_id": 5,
+                "author_id": 104,
+                "channel_id": 12,
+                "message_content": "Can someone share the project file?",
+                "created_at": "2025-04-14T08:35:10Z",
+            },
+        ]
+
+        response = solr_test_client.select_docs(query="*:*", core_name="test_core")
+        assert response is not None
+        assert response["response"]["numFound"] == 0
+        solr_test_client.index_data_with_hard_commit(data=data, core_name="test_core")
+
+        response = solr_test_client.select_docs(query="*:*", core_name="test_core")
+        assert response is not None
+        assert response["response"]["numFound"] == len(data)
