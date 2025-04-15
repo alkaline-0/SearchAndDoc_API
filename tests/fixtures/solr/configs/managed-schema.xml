@@ -9,6 +9,8 @@
     <fieldType name="pdoubles" class="solr.TrieDoubleField" positionIncrementGap="0" multiValued="false"/>
     <fieldType name="plongs" class="solr.TrieLongField" positionIncrementGap="0" multiValued="false"/>
     <fieldType name="pdates" class="DatePointField" multiValued="false"/>
+    <fieldType name="knn_vector" class="solr.DenseVectorField" vectorDimension="768"
+  similarityFunction="cosine"  knnAlgorithm="hnsw" hnswMaxConnections="10" hnswBeamWidth="40"/>
     <fieldType name="text_general" class="TextField" autoGeneratePhraseQueries="true" enableGraphQueries="true" multiValued="false"/>
       <analyzer type="index">
             <!-- Uses word break rules of the Unicode Text Segmentation algorith when splitting text into words. -->
@@ -36,6 +38,7 @@
         <field name="channel_id" type="plongs" indexed="true" stored="true" required="true"/>
         <field name="created_at" type="pdates" required="true"/>
         <field name="message_content" type="text_general" indexed="true" stored="true" required="true"/>
+        <field name="bert_vector" type="knn_vector" indexed="true" stored="true"/>
         <field name="_version_" type="plongs" indexed="true" stored="true" multiValued="false"/>
     </fields>
     <!-- Configure unique key -->
