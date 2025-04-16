@@ -7,7 +7,7 @@ services:
     ports:
     - "8983:8983"
     volumes:
-    - data:/var/solr
+    - solr-data:/var/solr
     environment:
     - ZK_HOST=zoo1:2181
     depends_on:
@@ -26,4 +26,4 @@ services:
       ZOO_MY_ID: 1
       ZOO_SERVERS: server.1=0.0.0.0:2888:3888;2181
 volumes:
-  data:
+  solr-data:
