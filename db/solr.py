@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 
 import pysolr
 import requests
+from sentence_transformers import SentenceTransformer
 
 """Solr configuration settings."""
 
@@ -42,6 +43,7 @@ class SolrCollectionAgent:
         self._create_collection(collection_name)
         self._conn_url = urljoin(base_url, collection_name)
         self._pysolr_obj = pysolr.Solr(self._conn_url)
+        self.model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
 
     def _create_collection(self, collection_name: str) -> Any:
         """Creates a new Solr collection.
@@ -114,26 +116,22 @@ class SolrCollectionAgent:
             )
             raise error
 
-    def update_dense_index(self):
-        # retrieve all the recrods from collection
-        solr_response = self._pysolr_obj.search(
-            q="*:*", rows=30, start=0, fl="message_id,message_content", wt="json"
-        )
+    def collection_exist(self, collection_name: str) -> bool:
+        """Checks if a collection exists.
 
-        for item in solr_response:
-            message_content = item["message_content"]
-            message_id = item["id"]
+        Args:
+            collection_name: Name of collection to check
 
-            embedding = self.model.encode([message_content])
-            print(f"Updating uuid {message_id}")
+        Returns:
+            True if collection exists, False otherwise
 
-            self.index_data(
-                {
-                    "message_id": message_id,
-                    "bert_vector": {"set": [float(w) for w in embedding[0]]},
-                },
-                soft_commit=False,
-            )
+        Raises:
+            requests.exceptions.HTTPError: If Solr request fails
+            Exception: For other unexpected errors
+        """
+        params = {"action": "LIST"}
+        res = self._make_solr_request(url=self._admin_url, params=params)
+        return collection_name in res["collections"]
 
     def index_data(self, data: list[dict], soft_commit: bool) -> Any:
         """Indexes data into a Solr collection.
@@ -149,30 +147,61 @@ class SolrCollectionAgent:
             requests.exceptions.HTTPError: If Solr request fails
             Exception: For other unexpected errors
         """
-        if not data:
-            raise ValueError("Data to index cannot be empty")
-        try:
-            if soft_commit:
-                self._pysolr_obj.add(data, softCommit=True)
-            else:
-                self._pysolr_obj.add(data, commit=True)
-        except requests.exceptions.HTTPError as error:
-            print(
-                f"Failed to index data in Solr collection '{self.collection_name}': {error}"
+        # if not data:
+        #     raise ValueError("Data to index cannot be empty")
+        # try:
+        #     if soft_commit:
+        #         self._pysolr_obj.add(data, softCommit=True)
+        #     else:
+        #         self._pysolr_obj.add(data, commit=True)
+        # except requests.exceptions.HTTPError as error:
+        #     print(
+        #         f"Failed to index data in Solr collection '{self.collection_name}': {error}"
+        #     )
+        #     raise error
+        self._pysolr_obj.add(data)
+        self._pysolr_obj.commit()
+
+    def update_dense_index(self):
+        # retrieve all the recrods from collection
+        solr_response = self._pysolr_obj.search(
+            q="*:*",
+            rows=2147483647,
+            start=0,
+            fl="message_id,message_content",
+            wt="json",
+        )
+
+        # Save topic info alongside each document (store in Solr or side index)
+        for item in solr_response:
+            content = item["message_content"]
+            idx = item["message_id"]
+            embedding = self.model.encode([content])
+            self._pysolr_obj.add(
+                {
+                    "message_id": idx,
+                    "bert_vector": {"set": [float(w) for w in embedding[0]]},
+                },
             )
-            raise error
+            self._pysolr_obj.commit()
 
     def semantic_search(self, query):
         print(f"************ Semantic search for {query}")
         embedding = self.model.encode([query])
+        # print({str([float(w) for w in embedding[0]])})
+
+        # Search in Solr via vector search
+        q = "{!knn f=bert_vector topK=50}" + str([float(w) for w in embedding[0]])
         solr_response = self._pysolr_obj.search(
-            fl=["message_id", "message_content", "score"],
-            q="{!knn f=bert_vector topK=10}" + str([float(w) for w in embedding[0]]),
-            rows=30,
+            fl=["message_id", "message_content", "score"], q=q, rows=2147483647
         )
-        print(f"found {len(solr_response)} results")
-        for item in solr_response:
-            print(item["message_content"], "\nscore : ", item["score"])
+
+        for item in solr_response.docs:
+            print(
+                item["message_content"],
+                "\nscore : ",
+                item["score"],
+            )
 
     def _make_solr_request(self, url: str, params: dict[str]) -> Any:
         """Makes HTTP request to Solr and handles response.
@@ -204,20 +233,3 @@ class SolrCollectionAgent:
         except Exception as error:
             print(f"Unexpected error occurred: {error}")
             raise
-
-    def collection_exist(self, collection_name: str) -> bool:
-        """Checks if a collection exists.
-
-        Args:
-            collection_name: Name of collection to check
-
-        Returns:
-            True if collection exists, False otherwise
-
-        Raises:
-            requests.exceptions.HTTPError: If Solr request fails
-            Exception: For other unexpected errors
-        """
-        params = {"action": "LIST"}
-        res = self._make_solr_request(url=self._admin_url, params=params)
-        return collection_name in res["collections"]
