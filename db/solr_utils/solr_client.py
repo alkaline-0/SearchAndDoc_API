@@ -1,29 +1,33 @@
-import pysolr
 from sentence_transformers import util
 
-from db.solr_utils.solr_config import SolrConfig
+from db.solr_utils.pysolr_interface import SolrClientInterface
+from db.solr_utils.sentence_transformer_interface import SentenceTransformerInterface
 from db.solr_utils.solr_exceptions import SolrValidationError
 
 
 class SolrCollectionClient:
     def __init__(
         self,
-        cfg: SolrConfig,
-        solr_session: pysolr.Solr,
+        solr_client: SolrClientInterface,
+        retriever_model: SentenceTransformerInterface,
+        rerank_model: SentenceTransformerInterface,
     ) -> None:
         """Creates a new Solr collection agent.
+        
         Args:
-            cfg: SolrConfig object containing configuration parameters
-            solr_session: pysolr.Solr session object
+            solr_client: SolrClientInterface object for Solr operations
+            retriever_model: SentenceTransformerInterface for retrieval
+            rerank_model: SentenceTransformerInterface for re-ranking
+            
         Returns: None
+        
         Raises:
             ValueErrorException: for any missing params
         """
 
-        self.solr_session = solr_session
-        self.cfg = cfg
-        self.rerank_model = self.cfg.RERANK_MODEL
-        self.retriever_model = self.cfg.RETRIEVER_MODEL
+        self.solr_client = solr_client
+        self.rerank_model = rerank_model
+        self.retriever_model = retriever_model
 
     def index_data(self, data: list[dict], soft_commit: bool) -> str:
         """Indexes data into a Solr collection.
@@ -49,8 +53,8 @@ class SolrCollectionClient:
         for i, item in enumerate(data):
             item["bert_vector"] = [float(w) for w in embeddings[i]]
 
-        self.solr_session.add(data)
-        self.solr_session.commit(softCommit=soft_commit)
+        self.solr_client.add(data)
+        self.solr_client.commit(softCommit=soft_commit)
 
     def semantic_search(
         self, q: str, row_begin: int, row_end: int, threshold: float = 0.2
@@ -93,9 +97,7 @@ class SolrCollectionClient:
         if row_end <= row_begin:
             raise SolrValidationError("Row end must be greater than row begin")
 
-    def _retrieve_docs_with_knn(
-        self, row_begin: int, row_end: int, query: str
-    ) -> pysolr.Results:
+    def _retrieve_docs_with_knn(self, row_begin: int, row_end: int, query: str) -> dict:
         """Retrieves documents from Solr using KNN search.
         Args:
             row_begin: Starting row for pagination
@@ -108,7 +110,7 @@ class SolrCollectionClient:
         retriever_embedding = self.retriever_model.encode([query])
         knn_query = f"{{!knn f=bert_vector topK=100}}{[float(w) for w in retriever_embedding[0]]}"
 
-        return self.solr_session.search(
+        return self.solr_client.search(
             fl=["message_id", "message_content"],
             q=knn_query,
             start=row_begin,

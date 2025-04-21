@@ -19,11 +19,7 @@ class SolrAdminClient:
         """Creates a new Solr Admin obj.
 
         Args:
-            user_name: Solr user account with admin priveleges.
-            password: Solr user account password.
-            solr_host: host that Solr DB is running on.
-            solr_port: Solr port to connect to
-            collection_name: Name of collection to create.
+            cfg: SolrConfig object containing Solr configuration
 
         Returns: None
 
@@ -67,10 +63,13 @@ class SolrAdminClient:
 
     def delete_all_collections(self) -> dict:
         """Deletes all Solr collections.
+        
         Args:
             None
+            
         Returns:
             Python object containing Solr response
+            
         Raises:
             requests.exceptions.HTTPError: If Solr request fails
             Exception: For other unexpected errors
@@ -115,35 +114,10 @@ class SolrAdminClient:
         res = self._make_solr_request(params=params)
         return collection_name in res["collections"]
 
-    def create_solr_session_client(self, collection_url: str) -> pysolr.Solr:
-        """Creates a Solr session client for the specified collection.
-
-        Args:
-            collection_url: URL of the Solr collection
-
-        Returns:
-            Solr session client object
-
-        Raises:
-            ValueError: If collection name is empty
-        """
-        if not collection_url:
-            raise SolrValidationError("collection url cannot be empty")
-
-        solr_session = pysolr.Solr(
-            url=collection_url,
-            timeout=10,
-            auth=(self.cfg.USER_NAME, self.cfg.PASSWORD),
-            always_commit=True,
-        )
-
-        return solr_session
-
     def _make_solr_request(self, params: dict[str, Any]) -> dict:
         """Makes HTTP request to Solr and handles response.
 
         Args:
-            url: Solr API endpoint URL
             params: Request parameters
 
         Returns:

@@ -1,7 +1,6 @@
 import os
 
 from attr import dataclass
-from sentence_transformers import SentenceTransformer
 
 from db.solr_utils.solr_exceptions import SolrValidationError
 
@@ -13,8 +12,6 @@ class SolrConfig:
     SOLR_HOST: str = None
     SOLR_PORT: str = None
     BASE_URL: str = None
-    RETRIEVER_MODEL: SentenceTransformer = None
-    RERANK_MODEL: SentenceTransformer = None
     RETRIEVER_MODEL_NAME: str = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
     RERANK_MODEL_NAME: str = "sentence-transformers/all-mpnet-base-v2"
     THRESHOLD: float = 0.2
@@ -29,5 +26,3 @@ class SolrConfig:
                 "Missing Solr configuration environment variables"
             )
         self.BASE_URL = f"http://{self.SOLR_HOST}:{self.SOLR_PORT}/solr/"
-        self.RETRIEVER_MODEL = SentenceTransformer(self.RETRIEVER_MODEL_NAME)
-        self.RERANK_MODEL = SentenceTransformer(self.RERANK_MODEL_NAME)

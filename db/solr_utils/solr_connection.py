@@ -1,5 +1,8 @@
 from urllib.parse import urljoin
 
+import pysolr
+from sentence_transformers import SentenceTransformer
+
 from db.solr_utils.solr_admin import SolrAdminClient
 from db.solr_utils.solr_client import SolrCollectionClient
 from db.solr_utils.solr_config import SolrConfig
@@ -20,10 +23,20 @@ class SolrConnection:
             collection_url = self._admin_client.create_collection(
                 collection_name=collection_name
             )
-            solr_session = self._admin_client.create_solr_session(
-                collection_url=collection_url
+            solr_client = pysolr.Solr(
+                url=collection_url,
+                timeout=10,
+                auth=(self.cfg.USER_NAME, self.cfg.PASSWORD),
+                always_commit=True,
             )
-        return SolrCollectionClient(solr_session, self.cfg)
+        retriever_model = SentenceTransformer(self.RETRIEVER_MODEL_NAME)
+        rerank_model = SentenceTransformer(self.RERANK_MODEL_NAME)
+
+        return SolrCollectionClient(
+            solr_client=solr_client,
+            retriever_model=retriever_model,
+            rerank_model=rerank_model,
+        )
 
     def delete_all_collections(self) -> None:
         """Delete all collections."""
