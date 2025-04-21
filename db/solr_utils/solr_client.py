@@ -29,7 +29,7 @@ class SolrCollectionClient:
         self.rerank_model = rerank_model
         self.retriever_model = retriever_model
 
-    def index_data(self, data: list[dict], soft_commit: bool) -> str:
+    def index_data(self, data: list[dict], soft_commit: bool) -> None:
         """Indexes data into a Solr collection.
 
         Args:
@@ -68,7 +68,7 @@ class SolrCollectionClient:
         Returns:
             List of dictionaries containing search results
         Raises:
-            ValueError: If query is empty
+            SolrValidationError: If validation fails
         """
         self._validate_search_params(query=q, row_begin=row_begin, row_end=row_end)
         # First-stage retrieval: multi-qa-mpnet-base-dot-v1
