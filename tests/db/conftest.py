@@ -4,18 +4,15 @@ from collections.abc import Iterator
 import fixtup
 import pytest
 
-from db.solr import SolrCollectionAgent
+from db.solr_utils.solr_client import SolrCollectionClient
+from db.solr_utils.solr_connection import SolrConnection
+from tests.db.mocks.mock_solr_config import MockSolrConfig
 
 
 @pytest.fixture(autouse=True)
-def solr_test_agent() -> Iterator[SolrCollectionAgent]:
+def solr_test_agent() -> Iterator[SolrCollectionClient]:
     with fixtup.up("solr"):
-        client = SolrCollectionAgent(
-            user_name=os.getenv("USER_NAME"),
-            password=os.getenv("PASSWORD"),
-            solr_host=os.getenv("SOLR_HOST_TEST"),
-            solr_port=os.getenv("SOLR_PORT_TEST"),
-            collection_name="test_collection",
-        )
+        solr_conn = SolrConnection(cfg=MockSolrConfig())
+        client = solr_conn.get_collection_client("test")
         yield client
-        client.delete_all_collections()
+        solr_conn.delete_all_collections()
