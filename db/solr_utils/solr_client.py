@@ -1,30 +1,29 @@
 import pysolr
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
 
 from db.solr_utils.solr_config import SolrConfig
 from db.solr_utils.solr_exceptions import SolrValidationError
 
+
 class SolrCollectionClient:
     def __init__(
         self,
-        collection_conn: str,
+        cfg: SolrConfig,
+        solr_session: pysolr.Solr,
     ) -> None:
         """Creates a new Solr collection agent.
         Args:
-            collection_conn: Solr connection string.
-            collection_name: Name of Solr collection.
+            cfg: SolrConfig object containing configuration parameters
+            solr_session: pysolr.Solr session object
         Returns: None
         Raises:
             ValueErrorException: for any missing params
         """
 
-        if not all([collection_conn]):
-            raise SolrValidationError("All connection parameters are required")
-
-        self._conn_url = collection_conn
-        self._pysolr_obj = pysolr.Solr(self._conn_url)
-        self.rerank_model = SentenceTransformer(SolrConfig.RERANK_MODEL)
-        self.retriever_model = SentenceTransformer(SolrConfig.RETRIEVER_MODEL)
+        self.solr_session = solr_session
+        self.cfg = cfg
+        self.rerank_model = self.cfg.RERANK_MODEL
+        self.retriever_model = self.cfg.RETRIEVER_MODEL
 
     def index_data(self, data: list[dict], soft_commit: bool) -> str:
         """Indexes data into a Solr collection.
@@ -50,8 +49,8 @@ class SolrCollectionClient:
         for i, item in enumerate(data):
             item["bert_vector"] = [float(w) for w in embeddings[i]]
 
-        self._pysolr_obj.add(data)
-        self._pysolr_obj.commit(softCommit=soft_commit)
+        self.solr_session.add(data)
+        self.solr_session.commit(softCommit=soft_commit)
 
     def semantic_search(
         self, q: str, row_begin: int, row_end: int, threshold: float = 0.2
@@ -109,7 +108,7 @@ class SolrCollectionClient:
         retriever_embedding = self.retriever_model.encode([query])
         knn_query = f"{{!knn f=bert_vector topK=100}}{[float(w) for w in retriever_embedding[0]]}"
 
-        return self._pysolr_obj.search(
+        return self.solr_session.search(
             fl=["message_id", "message_content"],
             q=knn_query,
             start=row_begin,
@@ -143,4 +142,3 @@ class SolrCollectionClient:
             key=lambda x: x[1],
             reverse=True,
         )
-

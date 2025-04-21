@@ -1,15 +1,21 @@
 import inspect
 import json
+from typing import Any
 from urllib.parse import urljoin
 
-import requests
-from db.solr_utils.solr_config import SolrConfig
 import pysolr
+import requests
 
-from db.solr_utils.solr_exceptions import SolrValidationError
+from db.solr_utils.solr_config import SolrConfig
+from db.solr_utils.solr_exceptions import (
+    SolrConnectionError,
+    SolrError,
+    SolrValidationError,
+)
+
 
 class SolrAdminClient:
-    def __init__(self) -> None:
+    def __init__(self, cfg: SolrConfig) -> None:
         """Creates a new Solr Admin obj.
 
         Args:
@@ -24,8 +30,8 @@ class SolrAdminClient:
         Raises:
             ValueErrorException: for any missing params
         """
-
-        self._admin_url = urljoin(SolrConfig.BASE_URL, "admin/collections")
+        self.cfg = cfg
+        self._admin_url = urljoin(cfg.BASE_URL, "admin/collections")
 
     def create_collection(self, collection_name: str) -> str:
         """Creates a new Solr collection.
@@ -44,7 +50,7 @@ class SolrAdminClient:
         if not collection_name:
             raise SolrValidationError("Collection name cannot be empty")
 
-        collection_conn = urljoin(SolrConfig().BASE_URL, collection_name)
+        collection_conn = urljoin(self.cfg.BASE_URL, collection_name)
         if self.collection_exist(collection_name):
             # TODO: log failure of collection creation
             return collection_conn
@@ -54,6 +60,7 @@ class SolrAdminClient:
             "name": collection_name,
             "numShards": 1,
             "collection.configName": "solrconfig.xml",
+            "user": f"{self.cfg.USER_NAME}:{self.cfg.PASSWORD}",
         }
         self._make_solr_request(params=params)
         return collection_conn
@@ -70,13 +77,17 @@ class SolrAdminClient:
         """
 
         try:
-            params = {"action": "LIST"}
+            params = {
+                "action": "LIST",
+                "user": f"{self.cfg.USER_NAME}:{self.cfg.PASSWORD}",
+            }
             res = self._make_solr_request(params=params)
 
             for collection in res["collections"]:
                 params = {
                     "action": "DELETE",
                     "name": collection,
+                    "user": f"{self.cfg.USER_NAME}:{self.cfg.PASSWORD}",
                 }
                 self._make_solr_request(params=params)
                 print(f"Collection '{collection}' deleted successfully.")
@@ -97,9 +108,36 @@ class SolrAdminClient:
             requests.exceptions.HTTPError: If Solr request fails
             Exception: For other unexpected errors
         """
-        params = {"action": "LIST"}
+        params = {
+            "action": "LIST",
+            "user": f"{self.cfg.USER_NAME}:{self.cfg.PASSWORD}",
+        }
         res = self._make_solr_request(params=params)
         return collection_name in res["collections"]
+
+    def create_solr_session_client(self, collection_url: str) -> pysolr.Solr:
+        """Creates a Solr session client for the specified collection.
+
+        Args:
+            collection_url: URL of the Solr collection
+
+        Returns:
+            Solr session client object
+
+        Raises:
+            ValueError: If collection name is empty
+        """
+        if not collection_url:
+            raise SolrValidationError("collection url cannot be empty")
+
+        solr_session = pysolr.Solr(
+            url=collection_url,
+            timeout=10,
+            auth=(self.cfg.USER_NAME, self.cfg.PASSWORD),
+            always_commit=True,
+        )
+
+        return solr_session
 
     def _make_solr_request(self, params: dict[str, Any]) -> dict:
         """Makes HTTP request to Solr and handles response.
@@ -131,12 +169,10 @@ class SolrAdminClient:
         ) as error:  # Catch network-related errors
             caller_frame = inspect.getouterframes(inspect.currentframe(), 2)
             print(f"Solr request failed originating from {caller_frame[1][3]}: {error}")
-            raise
+            raise SolrConnectionError(error)
         except json.JSONDecodeError as error:  # Catch JSON decoding errors
             print(f"Failed to decode JSON response: {error}")
-            raise
+            raise SolrError(error)
         except Exception as error:
             print(f"Unexpected error occurred: {error}")
-            raise
-
-
+            raise SolrError(error)
