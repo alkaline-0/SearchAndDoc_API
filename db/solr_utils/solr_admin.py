@@ -27,10 +27,23 @@ class SolrAdminClient:
         Raises:
             ValueErrorException: for any missing params
         """
+
+        self._validate_credentials(cfg)
+
         self.cfg = cfg
         self._admin_url = urljoin(cfg.BASE_URL, "admin/collections")
 
-    def create_collection(self, collection_name: str) -> str:
+    def _validate_credentials(self, cfg):
+        """Handles None, empty strings, and whitespace."""
+        if cfg.USER_NAME is None or cfg.PASSWORD is None:
+            raise SolrValidationError("Username/password cannot be None")
+
+        if not cfg.USER_NAME.strip() or not cfg.PASSWORD.strip():
+            raise SolrValidationError(
+                "Username/password cannot be empty or whitespace-only"
+            )
+
+    def create_collection(self, collection_name: str, num_shards: int = 1) -> str:
         """Creates a new Solr collection.
 
         Args:
@@ -46,6 +59,8 @@ class SolrAdminClient:
 
         if not collection_name:
             raise SolrValidationError("Collection name cannot be empty")
+        if num_shards <= 0:
+            raise SolrValidationError("Number of shards must be greater than 0")
 
         collection_conn = urljoin(self.cfg.BASE_URL, collection_name)
         if self.collection_exist(collection_name):
@@ -55,10 +70,13 @@ class SolrAdminClient:
         params = {
             "action": "CREATE",
             "name": collection_name,
-            "numShards": 1,
+            "numShards": num_shards,
             "collection.configName": "solrconfig.xml",
         }
-        self._make_solr_request(params=params)
+        try:
+            self._make_solr_request(params=params)
+        except SolrConnectionError:
+            raise SolrConnectionError()
         return collection_conn
 
     def delete_all_collections(self) -> dict:
@@ -86,9 +104,8 @@ class SolrAdminClient:
                     "action": "DELETE",
                     "name": collection,
                 }
-                res = self._make_solr_request(params=params)
+                self._make_solr_request(params=params)
                 print(f"Collection '{collection}' deleted successfully.")
-                return res
         except requests.exceptions.HTTPError as error:
             print(f"Failed to delete collection: {error}")
             raise error
