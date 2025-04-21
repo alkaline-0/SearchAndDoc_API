@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List
 
 
 class SentenceTransformerInterface(ABC):
     @abstractmethod
-    def encode(self, sentences: List[str], **kwargs):
+    def encode(self, sentences: list[str], **kwargs):
         pass

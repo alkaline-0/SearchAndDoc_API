@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 
 import pysolr
 import requests
+from requests.auth import HTTPBasicAuth
 
 from db.solr_utils.solr_config import SolrConfig
 from db.solr_utils.solr_exceptions import (
@@ -56,20 +57,19 @@ class SolrAdminClient:
             "name": collection_name,
             "numShards": 1,
             "collection.configName": "solrconfig.xml",
-            "user": f"{self.cfg.USER_NAME}:{self.cfg.PASSWORD}",
         }
         self._make_solr_request(params=params)
         return collection_conn
 
     def delete_all_collections(self) -> dict:
         """Deletes all Solr collections.
-        
+
         Args:
             None
-            
+
         Returns:
             Python object containing Solr response
-            
+
         Raises:
             requests.exceptions.HTTPError: If Solr request fails
             Exception: For other unexpected errors
@@ -78,7 +78,6 @@ class SolrAdminClient:
         try:
             params = {
                 "action": "LIST",
-                "user": f"{self.cfg.USER_NAME}:{self.cfg.PASSWORD}",
             }
             res = self._make_solr_request(params=params)
 
@@ -86,7 +85,6 @@ class SolrAdminClient:
                 params = {
                     "action": "DELETE",
                     "name": collection,
-                    "user": f"{self.cfg.USER_NAME}:{self.cfg.PASSWORD}",
                 }
                 self._make_solr_request(params=params)
                 print(f"Collection '{collection}' deleted successfully.")
@@ -109,7 +107,6 @@ class SolrAdminClient:
         """
         params = {
             "action": "LIST",
-            "user": f"{self.cfg.USER_NAME}:{self.cfg.PASSWORD}",
         }
         res = self._make_solr_request(params=params)
         return collection_name in res["collections"]
@@ -128,12 +125,13 @@ class SolrAdminClient:
             Exception: For other unexpected errors
         """
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
+        basic = HTTPBasicAuth(self.cfg.USER_NAME, self.cfg.PASSWORD)
         try:
             response = requests.get(
                 self._admin_url,
                 params=params,
                 headers=headers,
+                auth=basic,
             )
             response.raise_for_status()
             return json.loads(pysolr.force_unicode(response.content))

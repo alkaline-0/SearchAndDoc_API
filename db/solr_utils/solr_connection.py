@@ -12,7 +12,7 @@ class SolrConnection:
     """Manages Solr connection and client creation."""
 
     def __init__(self, cfg: SolrConfig) -> None:
-        self._admin_client = SolrAdminClient()
+        self._admin_client = SolrAdminClient(cfg=cfg)
         self.cfg = cfg
 
     def get_collection_client(self, collection_name: str) -> SolrCollectionClient:
@@ -29,14 +29,14 @@ class SolrConnection:
                 auth=(self.cfg.USER_NAME, self.cfg.PASSWORD),
                 always_commit=True,
             )
-        retriever_model = SentenceTransformer(self.RETRIEVER_MODEL_NAME)
-        rerank_model = SentenceTransformer(self.RERANK_MODEL_NAME)
+            retriever_model = SentenceTransformer(self.cfg.RETRIEVER_MODEL_NAME)
+            rerank_model = SentenceTransformer(self.cfg.RERANK_MODEL_NAME)
 
-        return SolrCollectionClient(
-            solr_client=solr_client,
-            retriever_model=retriever_model,
-            rerank_model=rerank_model,
-        )
+            return SolrCollectionClient(
+                solr_client=solr_client,
+                retriever_model=retriever_model,
+                rerank_model=rerank_model,
+            )
 
     def delete_all_collections(self) -> None:
         """Delete all collections."""

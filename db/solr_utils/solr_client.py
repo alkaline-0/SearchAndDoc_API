@@ -13,14 +13,14 @@ class SolrCollectionClient:
         rerank_model: SentenceTransformerInterface,
     ) -> None:
         """Creates a new Solr collection agent.
-        
+
         Args:
             solr_client: SolrClientInterface object for Solr operations
             retriever_model: SentenceTransformerInterface for retrieval
             rerank_model: SentenceTransformerInterface for re-ranking
-            
+
         Returns: None
-        
+
         Raises:
             ValueErrorException: for any missing params
         """
