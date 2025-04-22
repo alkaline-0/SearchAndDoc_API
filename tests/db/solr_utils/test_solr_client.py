@@ -114,3 +114,11 @@ class TestSolrClient:
 
             solr_admin = SolrAdminClient(solr_test_agent.cfg)
             assert solr_admin.collection_exist("test")  # Verify query sanitization
+
+    def test_commit_behavior(self, solr_test_agent):
+        """Verify documents are immediately searchable after insertion."""
+
+        solr_test_agent.solr_client.add(documents)
+
+        results = solr_test_agent.solr_client.search("message_id:5")
+        assert len(results) == 1  # Fails if always_commit isn't working
