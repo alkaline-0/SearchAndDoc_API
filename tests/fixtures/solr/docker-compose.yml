@@ -1,0 +1,30 @@
+services:
+  solr:
+    build:
+      context: '.'
+      dockerfile: solr.Dockerfile
+    container_name: solr-test
+    ports:
+    - "8984:8983"
+    volumes:
+    - solr-data:/var/solr
+    restart: always
+    environment:
+    - ZK_HOST=zoo1:2181
+    depends_on:
+    - zoo1
+    tty: true
+    stdin_open: true
+  zoo1:
+    tty: true
+    image: zookeeper:3.6.2
+    container_name: zoo1-test
+    restart: always
+    hostname: zoo1
+    ports:
+    - 2182:2181
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=0.0.0.0:2888:3888;2181
+volumes:
+  solr-data:
