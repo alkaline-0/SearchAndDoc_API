@@ -29,8 +29,8 @@ class SolrConnection:
                 auth=(self.cfg.USER_NAME, self.cfg.PASSWORD),
                 always_commit=True,
             )
-            retriever_model = SentenceTransformer(self.cfg.RETRIEVER_MODEL_NAME)
-            rerank_model = SentenceTransformer(self.cfg.RERANK_MODEL_NAME)
+            retriever_model = SentenceTransformer(self.cfg.RETRIEVER_MODEL_NAME, device="cuda")
+            rerank_model = SentenceTransformer(self.cfg.RERANK_MODEL_NAME, device="cuda")
 
             return SolrCollectionClient(
                 solr_client=solr_client,
