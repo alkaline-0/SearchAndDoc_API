@@ -3,15 +3,17 @@ from urllib.parse import urljoin
 import pysolr
 
 from db.helpers.sentence_transformer_impl import STSentenceTransformer
-from db.solr_utils.solr_admin import SolrAdminClient
-from db.solr_utils.solr_client import SolrCollectionClient
+from db.solr_service_layers.interfaces.solr_connection_interface import SolrConnectionInterface
+from db.solr_service_layers.solr_admin import SolrAdminClient
+from db.solr_service_layers.solr_client import SolrCollectionClient
 from db.solr_utils.solr_config import SolrConfig
 
 
-class SolrConnection:
+class SolrConnection(SolrConnectionInterface):
     """Manages Solr connection and client creation."""
 
     def __init__(self, cfg: SolrConfig) -> None:
+        super().__init__()
         self._admin_client = SolrAdminClient(cfg=cfg)
         self.cfg = cfg
 

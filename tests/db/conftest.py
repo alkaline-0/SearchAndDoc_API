@@ -3,8 +3,8 @@ from collections.abc import Iterator
 import fixtup
 import pytest
 
-from db.solr_utils.solr_client import SolrCollectionClient
-from db.solr_utils.solr_connection import SolrConnection
+from db.solr_service_layers.solr_client import SolrCollectionClient
+from db.solr_service_layers.solr_connection import SolrConnection
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 
 

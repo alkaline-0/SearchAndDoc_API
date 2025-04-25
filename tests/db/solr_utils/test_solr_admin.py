@@ -2,7 +2,7 @@ import unittest
 
 import pytest
 
-from db.solr_utils.solr_admin import SolrAdminClient
+from db.solr_service_layers.solr_admin import SolrAdminClient
 from db.solr_utils.solr_exceptions import SolrConnectionError, SolrValidationError
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 
