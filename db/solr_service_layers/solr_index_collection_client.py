@@ -1,3 +1,8 @@
+from concurrent.futures import ThreadPoolExecutor
+
+from db.helpers.interfaces.sentence_transformer_interface import (
+    SentenceTransformerInterface,
+)
 from db.solr_utils.interfaces.pysolr_interface import SolrClientInterface
 from db.solr_utils.solr_exceptions import SolrValidationError
 
@@ -6,6 +11,7 @@ class SolrIndexCollectionClient:
     def __init__(
         self,
         solr_client: SolrClientInterface,
+        retriever_model: SentenceTransformerInterface,
     ) -> None:
         """Creates a new Solr collection agent.
 
@@ -21,6 +27,9 @@ class SolrIndexCollectionClient:
         """
 
         self.solr_client = solr_client
+        self.retriever_model = retriever_model
+        self.batch_size = 500
+        self.workers = 4
 
     def index_data(self, data: list[dict], soft_commit: bool) -> None:
         """Indexes data into a Solr collection.
@@ -39,7 +48,36 @@ class SolrIndexCollectionClient:
         """
         if not data:
             raise SolrValidationError("Data to index cannot be empty")
+        with ThreadPoolExecutor(max_workers=self.workers) as executor:
+            batches = [
+                data[i : i + self.batch_size]
+                for i in range(0, len(data), self.batch_size)
+            ]
+            futures = [
+                executor.submit(
+                    self._add_bert_vector_to_data,
+                    batch,
+                )
+                for batch in batches
+            ]
 
+            for future in futures:
+                future.result()
+
+        self.solr_client.commit(softCommit=soft_commit)
+
+    def _add_bert_vector_to_data(self, data: list[dict]) -> list[dict]:
+        """Adds BERT vector to the data.
+
+        Args:
+            data: Data to add BERT vector to
+
+        Returns:
+            Data with BERT vector added
+
+        Raises:
+            ValueError: If data is empty
+        """
         contents = [item["message_content"] for item in data]
         embeddings = self.retriever_model.encode(contents)  # Batch encode
 
@@ -47,4 +85,3 @@ class SolrIndexCollectionClient:
             item["bert_vector"] = [float(w) for w in embeddings[i]]
 
         self.solr_client.add(data)
-        self.solr_client.commit(softCommit=soft_commit)

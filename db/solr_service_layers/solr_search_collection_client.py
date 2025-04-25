@@ -3,8 +3,9 @@ import re
 from sentence_transformers import util
 from solrq import Value
 
-from db.helpers.interfaces.sentence_transformer_interface import \
-    SentenceTransformerInterface
+from db.helpers.interfaces.sentence_transformer_interface import (
+    SentenceTransformerInterface,
+)
 from db.solr_utils.interfaces.pysolr_interface import SolrClientInterface
 from db.solr_utils.solr_exceptions import SolrError, SolrValidationError
 
