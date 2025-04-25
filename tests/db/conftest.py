@@ -3,15 +3,18 @@ from collections.abc import Iterator
 import fixtup
 import pytest
 
-from db.solr_service_layers.solr_index_collection_client import SolrIndexCollectionClient
 from db.solr_service_layers.solr_connection import SolrConnection
+from db.solr_service_layers.solr_index_collection_client import \
+    SolrIndexCollectionClient
 from tests.db.mocks.mock_solr_config import MockSolrConfig
+from tests.fixtures.test_data.fake_messages import documents
 
 
 @pytest.fixture(autouse=True)
-def solr_test_agent() -> Iterator[SolrIndexCollectionClient]:
+def solr_client() -> Iterator[SolrIndexCollectionClient]:
     with fixtup.up("solr"):
         solr_conn = SolrConnection(cfg=MockSolrConfig())
-        client = solr_conn.get_collection_client("test")
-        yield client
+
+        yield solr_conn
         solr_conn.delete_all_collections()
+        

@@ -3,16 +3,13 @@ from urllib.parse import urljoin
 import pysolr
 
 from db.helpers.sentence_transformer_impl import STSentenceTransformer
-from db.solr_service_layers.interfaces.solr_connection_interface import (
-    SolrConnectionInterface,
-)
+from db.solr_service_layers.interfaces.solr_connection_interface import \
+    SolrConnectionInterface
 from db.solr_service_layers.solr_admin import SolrAdminClient
-from db.solr_service_layers.solr_index_collection_client import (
-    SolrIndexCollectionClient,
-)
-from db.solr_service_layers.solr_search_collection_client import (
-    SolrSearchCollectionClient,
-)
+from db.solr_service_layers.solr_index_collection_client import \
+    SolrIndexCollectionClient
+from db.solr_service_layers.solr_search_collection_client import \
+    SolrSearchCollectionClient
 from db.solr_utils.solr_config import SolrConfig
 
 
