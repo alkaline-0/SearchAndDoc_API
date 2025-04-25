@@ -1,11 +1,5 @@
-import re
-
-from sentence_transformers import util
-from solrq import Value
-
 from db.solr_utils.interfaces.pysolr_interface import SolrClientInterface
-from db.helpers.interfaces.sentence_transformer_interface import SentenceTransformerInterface
-from db.solr_utils.solr_exceptions import SolrError, SolrValidationError
+from db.solr_utils.solr_exceptions import SolrValidationError
 
 
 class SolrIndexCollectionClient:
@@ -54,4 +48,3 @@ class SolrIndexCollectionClient:
 
         self.solr_client.add(data)
         self.solr_client.commit(softCommit=soft_commit)
-
