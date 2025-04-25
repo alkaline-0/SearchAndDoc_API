@@ -1,4 +1,3 @@
-
 import pytest
 
 from db.solr_utils.solr_exceptions import SolrValidationError
@@ -6,11 +5,13 @@ from tests.fixtures.test_data.fake_messages import documents
 
 
 class TestSolrIndexing:
-    
+
     def test_index_data_soft_commit_successfully(self, solr_client):
         solr_client.get_index_client("test").index_data(documents, soft_commit=True)
 
-        res = solr_client.get_index_client("test").solr_client.search(q="*:*", rows=len(documents))
+        res = solr_client.get_index_client("test").solr_client.search(
+            q="*:*", rows=len(documents)
+        )
 
         assert res.docs is not None
         assert len(res.docs) == len(documents)
@@ -20,7 +21,9 @@ class TestSolrIndexing:
     def test_index_data_hard_commit_successfully(self, solr_client):
         solr_client.get_index_client("test").index_data(documents, soft_commit=False)
 
-        res = solr_client.get_index_client("test").solr_client.search(q="*:*", rows=len(documents))
+        res = solr_client.get_index_client("test").solr_client.search(
+            q="*:*", rows=len(documents)
+        )
 
         assert res.docs is not None
         assert len(res.docs) == len(documents)

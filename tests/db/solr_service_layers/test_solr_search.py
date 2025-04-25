@@ -5,24 +5,32 @@ import pytest
 import torch
 
 from db.solr_service_layers.solr_admin import SolrAdminClient
-from db.solr_service_layers.solr_search_collection_client import SolrSearchCollectionClient
+from db.solr_service_layers.solr_search_collection_client import \
+    SolrSearchCollectionClient
 from db.solr_utils.solr_exceptions import SolrError, SolrValidationError
 from tests.fixtures.test_data.fake_messages import documents
+
 
 class TestSolrSearch:
     def test_empty_query_semantic_search(self, solr_client):
         with pytest.raises(SolrValidationError) as exec_info:
-            solr_client.get_search_client("test").semantic_search(q="", row_begin=0, row_end=10)
+            solr_client.get_search_client("test").semantic_search(
+                q="", row_begin=0, row_end=10
+            )
         assert "Query string cannot be empty" in str(exec_info.value)
 
     def test_negative_row_begin_semantic_search(self, solr_client):
         with pytest.raises(SolrValidationError) as exec_info:
-            solr_client.get_search_client("test").semantic_search(q="test", row_begin=-1, row_end=10)
+            solr_client.get_search_client("test").semantic_search(
+                q="test", row_begin=-1, row_end=10
+            )
         assert "Row begin must be non-negative" in str(exec_info.value)
 
     def test_row_end_less_than_row_begin_semantic_search(self, solr_client):
         with pytest.raises(SolrValidationError) as exec_info:
-            solr_client.get_search_client("test").semantic_search(q="test", row_begin=10, row_end=5)
+            solr_client.get_search_client("test").semantic_search(
+                q="test", row_begin=10, row_end=5
+            )
         assert "Row end must be greater than row begin" in str(exec_info.value)
 
     def test_threshold_filtering_semantic_search(self, solr_client):
@@ -55,17 +63,22 @@ class TestSolrSearch:
 
         with (
             patch.object(
-                SolrSearchCollectionClient, "_retrieve_docs_with_knn", return_value=mock_docs
+                SolrSearchCollectionClient,
+                "_retrieve_docs_with_knn",
+                return_value=mock_docs,
             ),
             patch.object(
-                solr_client.get_search_client("test").rerank_model, "encode"  # Second-stage model
+                solr_client.get_search_client("test").rerank_model,
+                "encode",  # Second-stage model
             ) as mock_reranker_encode,
         ):
             content_encode = torch.tensor([[0.1] * 768, [0.9] * 768])
             query_encode = torch.tensor([[0.9] * 768])
             mock_reranker_encode.side_effect = [query_encode, content_encode]
 
-            results = solr_client.get_search_client("test").semantic_search(q="test", row_begin=0, row_end=2)
+            results = solr_client.get_search_client("test").semantic_search(
+                q="test", row_begin=0, row_end=2
+            )
             print(results)
 
             assert [r["message_id"] for r in results] == ["2", "1"]
@@ -93,5 +106,7 @@ class TestSolrSearch:
 
         solr_client.get_search_client("test").solr_client.add(documents)
 
-        results = solr_client.get_search_client("test").solr_client.search("message_id:5")
+        results = solr_client.get_search_client("test").solr_client.search(
+            "message_id:5"
+        )
         assert len(results) == 1  # Fails if always_commit isn't working
