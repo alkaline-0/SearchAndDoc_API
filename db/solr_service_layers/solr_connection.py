@@ -20,7 +20,6 @@ class SolrConnection(SolrConnectionInterface):
     """Manages Solr connection and client creation."""
 
     def __init__(self, cfg: SolrConfig) -> None:
-        super().__init__()
         self._admin_client = SolrAdminClient(cfg=cfg)
         self.cfg = cfg
         self.rerank_model = STSentenceTransformer(
@@ -54,8 +53,6 @@ class SolrConnection(SolrConnectionInterface):
             solr_client=self._get_connection_obj(collection_name),
             retriever_model=retriever_model,
             rerank_model=self.rerank_model,
-            cfg=self.cfg,
-            collection_name=collection_name,
         )
 
     def get_index_client(self, collection_name: str) -> SolrIndexCollectionClient:

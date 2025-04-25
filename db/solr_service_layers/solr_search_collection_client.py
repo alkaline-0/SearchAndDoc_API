@@ -120,8 +120,10 @@ class SolrSearchCollectionClient:
         return self.solr_client.search(
             fl=["message_id", "message_content"],
             q=knn_query,
+            qt="/export",
             start=row_begin,
             rows=row_end - row_begin,
+            sort="score desc",
         )
 
     def _rerank_knn_results(self, query: str, solr_response: dict):
