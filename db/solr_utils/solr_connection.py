@@ -1,8 +1,8 @@
 from urllib.parse import urljoin
 
 import pysolr
-from sentence_transformers import SentenceTransformer
 
+from db.helpers.sentence_transformer_impl import STSentenceTransformer
 from db.solr_utils.solr_admin import SolrAdminClient
 from db.solr_utils.solr_client import SolrCollectionClient
 from db.solr_utils.solr_config import SolrConfig
@@ -23,20 +23,24 @@ class SolrConnection:
             collection_url = self._admin_client.create_collection(
                 collection_name=collection_name
             )
-            solr_client = pysolr.Solr(
-                url=collection_url,
-                timeout=10,
-                auth=(self.cfg.USER_NAME, self.cfg.PASSWORD),
-                always_commit=True,
-            )
-            retriever_model = SentenceTransformer(self.cfg.RETRIEVER_MODEL_NAME, device="cuda")
-            rerank_model = SentenceTransformer(self.cfg.RERANK_MODEL_NAME, device="cuda")
+        solr_client = pysolr.Solr(
+            url=collection_url,
+            timeout=10,
+            auth=(self.cfg.USER_NAME, self.cfg.PASSWORD),
+            always_commit=True,
+        )
+        retriever_model = STSentenceTransformer(
+            self.cfg.RETRIEVER_MODEL_NAME, device="mps"
+        )
+        rerank_model = STSentenceTransformer(self.cfg.RERANK_MODEL_NAME, device="mps")
 
-            return SolrCollectionClient(
-                solr_client=solr_client,
-                retriever_model=retriever_model,
-                rerank_model=rerank_model,
-            )
+        return SolrCollectionClient(
+            solr_client=solr_client,
+            retriever_model=retriever_model,
+            rerank_model=rerank_model,
+            cfg=self.cfg,
+            collection_name=collection_name,
+        )
 
     def delete_all_collections(self) -> None:
         """Delete all collections."""
