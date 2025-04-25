@@ -5,7 +5,7 @@ import pysolr
 from db.helpers.sentence_transformer_impl import STSentenceTransformer
 from db.solr_service_layers.interfaces.solr_connection_interface import SolrConnectionInterface
 from db.solr_service_layers.solr_admin import SolrAdminClient
-from db.solr_service_layers.solr_client import SolrCollectionClient
+from db.solr_service_layers.solr_index_collection_client import SolrIndexCollectionClient
 from db.solr_utils.solr_config import SolrConfig
 
 
@@ -17,7 +17,7 @@ class SolrConnection(SolrConnectionInterface):
         self._admin_client = SolrAdminClient(cfg=cfg)
         self.cfg = cfg
 
-    def get_collection_client(self, collection_name: str) -> SolrCollectionClient:
+    def get_collection_client(self, collection_name: str) -> SolrIndexCollectionClient:
         """Get client for specific collection."""
         if self._admin_client.collection_exist(collection_name):
             collection_url = urljoin(self.cfg.BASE_URL, collection_name)
@@ -36,7 +36,7 @@ class SolrConnection(SolrConnectionInterface):
         )
         rerank_model = STSentenceTransformer(self.cfg.RERANK_MODEL_NAME, device="mps")
 
-        return SolrCollectionClient(
+        return SolrIndexCollectionClient(
             solr_client=solr_client,
             retriever_model=retriever_model,
             rerank_model=rerank_model,

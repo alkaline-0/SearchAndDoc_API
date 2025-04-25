@@ -5,7 +5,7 @@ import pytest
 import torch
 
 from db.solr_service_layers.solr_admin import SolrAdminClient
-from db.solr_service_layers.solr_client import SolrCollectionClient
+from db.solr_service_layers.solr_index_collection_client import SolrIndexCollectionClient
 from db.solr_utils.solr_exceptions import SolrError, SolrValidationError
 from tests.fixtures.test_data.fake_messages import documents
 
@@ -59,7 +59,7 @@ class TestSolrClient:
             ("text4", 0.205, "id4"),  # 0.205 → round(0.205, 2) = 0.21 → included
         ]
         with patch.object(
-            SolrCollectionClient, "_rerank_knn_results", return_value=mock_scores
+            SolrIndexCollectionClient, "_rerank_knn_results", return_value=mock_scores
         ):
             results = solr_test_agent.semantic_search(
                 q="test", row_begin=0, row_end=10, threshold=0.2
@@ -81,7 +81,7 @@ class TestSolrClient:
 
         with (
             patch.object(
-                SolrCollectionClient, "_retrieve_docs_with_knn", return_value=mock_docs
+                SolrIndexCollectionClient, "_retrieve_docs_with_knn", return_value=mock_docs
             ),
             patch.object(
                 solr_test_agent.rerank_model, "encode"  # Second-stage model

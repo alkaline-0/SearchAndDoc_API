@@ -8,7 +8,7 @@ from db.helpers.interfaces.sentence_transformer_interface import SentenceTransfo
 from db.solr_utils.solr_exceptions import SolrError, SolrValidationError
 
 
-class SolrCollectionClient:
+class SolrSearchCollectionClient:
     def __init__(
         self,
         solr_client: SolrClientInterface,
@@ -31,33 +31,6 @@ class SolrCollectionClient:
         self.solr_client = solr_client
         self.rerank_model = rerank_model
         self.retriever_model = retriever_model
-
-    def index_data(self, data: list[dict], soft_commit: bool) -> None:
-        """Indexes data into a Solr collection.
-
-        Args:
-            data: Data to index
-            soft_commit: Whether to perform a soft commit
-
-        Returns:
-            Str containing the response from Solr
-
-        Raises:
-            requests.exceptions.HTTPError: If Solr request fails
-            Exception: For other unexpected errors
-            ValueError: If data is empty
-        """
-        if not data:
-            raise SolrValidationError("Data to index cannot be empty")
-
-        contents = [item["message_content"] for item in data]
-        embeddings = self.retriever_model.encode(contents)  # Batch encode
-
-        for i, item in enumerate(data):
-            item["bert_vector"] = [float(w) for w in embeddings[i]]
-
-        self.solr_client.add(data)
-        self.solr_client.commit(softCommit=soft_commit)
 
     def semantic_search(
         self,
