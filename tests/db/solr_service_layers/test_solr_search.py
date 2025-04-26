@@ -5,8 +5,9 @@ import pytest
 import torch
 
 from db.solr_service_layers.solr_admin import SolrAdminClient
-from db.solr_service_layers.solr_search_collection_client import \
-    SolrSearchCollectionClient
+from db.solr_service_layers.solr_search_collection_client import (
+    SolrSearchCollectionClient,
+)
 from db.solr_utils.solr_exceptions import SolrError, SolrValidationError
 from tests.fixtures.test_data.fake_messages import documents
 
