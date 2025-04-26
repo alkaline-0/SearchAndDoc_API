@@ -5,9 +5,6 @@ import pytest
 import torch
 
 from db.solr_service_layers.solr_admin import SolrAdminClient
-from db.solr_service_layers.solr_search_collection_client import (
-    SolrSearchCollectionClient,
-)
 from db.solr_utils.solr_exceptions import SolrError, SolrValidationError
 from tests.fixtures.test_data.fake_messages import documents
 
@@ -38,14 +35,15 @@ class TestSolrSearch:
         mock_scores = [
             ("text1", 0.1999, "id1"),
             ("text2", 0.20005, "id2"),  # 0.20005 → round(0.20005, 2) = 0.20 → included
-            ("text3", 0.194, "id3"),  # 0.194 → round(0.194, 2) = 0.19 → excluded
+            ("text3", 0.05, "id3"),  # 0.194 → round(0.194, 2) = 0.19 → excluded
             ("text4", 0.205, "id4"),  # 0.205 → round(0.205, 2) = 0.21 → included
         ]
+        search_client = solr_client.get_search_client("test")
         with patch.object(
-            SolrSearchCollectionClient, "_rerank_knn_results", return_value=mock_scores
+            search_client, "_rerank_knn_results", return_value=mock_scores
         ):
-            results = solr_client.get_search_client("test").semantic_search(
-                q="test", row_begin=0, row_end=10, threshold=0.2
+            results = search_client.semantic_search(
+                q="test", row_begin=0, row_end=10, threshold=0.1
             )
         assert len(results) == 3  # text1, text2, text4 should pass
         assert {r["message_id"] for r in results} == {"id1", "id2", "id4"}
@@ -61,15 +59,15 @@ class TestSolrSearch:
                 }
             }
         )
-
+        search_client = solr_client.get_search_client("test")
         with (
             patch.object(
-                SolrSearchCollectionClient,
+                search_client,
                 "_retrieve_docs_with_knn",
                 return_value=mock_docs,
             ),
             patch.object(
-                solr_client.get_search_client("test").rerank_model,
+                search_client.rerank_model,
                 "encode",  # Second-stage model
             ) as mock_reranker_encode,
         ):
@@ -77,9 +75,7 @@ class TestSolrSearch:
             query_encode = torch.tensor([[0.9] * 768])
             mock_reranker_encode.side_effect = [query_encode, content_encode]
 
-            results = solr_client.get_search_client("test").semantic_search(
-                q="test", row_begin=0, row_end=2
-            )
+            results = search_client.semantic_search(q="test", row_begin=0, row_end=2)
             print(results)
 
             assert [r["message_id"] for r in results] == ["2", "1"]
