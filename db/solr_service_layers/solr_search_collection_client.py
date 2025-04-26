@@ -1,10 +1,13 @@
 import re
+from concurrent.futures import ThreadPoolExecutor
 
 from sentence_transformers import util
 from solrq import Value
 
-from db.helpers.interfaces.sentence_transformer_interface import \
-    SentenceTransformerInterface
+from db.helpers.interfaces.sentence_transformer_interface import (
+    SentenceTransformerInterface,
+)
+from db.helpers.solr_request import make_solr_request
 from db.solr_utils.interfaces.pysolr_interface import SolrClientInterface
 from db.solr_utils.solr_config import SolrConfig
 from db.solr_utils.solr_exceptions import SolrError, SolrValidationError
@@ -41,8 +44,6 @@ class SolrSearchCollectionClient:
     def semantic_search(
         self,
         q: str,
-        row_begin: int,
-        row_end: int,
         threshold: float = 0.1,
         top_k: int = -1,
     ) -> list[dict]:
@@ -58,38 +59,33 @@ class SolrSearchCollectionClient:
             SolrValidationError: If validation fails
         """
         safe_q = self.build_safe_query(raw_query=q)
-        self._validate_search_params(query=safe_q, row_begin=row_begin, row_end=row_end)
+        self._validate_search_params(query=safe_q)
         # First-stage retrieval: multi-qa-mpnet-base-dot-v1
 
-        docs = self._retrieve_docs_with_knn(
-            row_begin=row_begin, row_end=row_end, query=safe_q, top_k=top_k
+        [docs] = self._retrieve_docs_with_knn(
+            query=safe_q,
+            top_k=top_k,
         )
 
         # Second-stage re-ranking: all-mpnet-base-v2
         reranked = self._rerank_knn_results(query=safe_q, solr_response=docs)
 
         search_results = []
-        for text, score, msg_id in reranked:
-            if round(score, 2) >= threshold:
-                search_results.append(
-                    {"message_id": msg_id, "score": score, "message_content": text}
-                )
+        for item in reranked:
+            if round(item[1], 2) >= threshold:
+                search_results.append(item[0])
 
         return search_results
 
     def build_safe_query(self, raw_query):
         return str(Value(raw_query))
 
-    def _validate_search_params(self, query: str, row_begin: int, row_end: int) -> None:
+    def _validate_search_params(self, query: str) -> None:
         """Validate search parameters."""
         if not query:
             raise SolrValidationError("Query string cannot be empty")
         if self._is_malicious(query):
             raise SolrError("Cannot perform this query")
-        if row_begin < 0:
-            raise SolrValidationError("Row begin must be non-negative")
-        if row_end <= row_begin:
-            raise SolrValidationError("Row end must be greater than row begin")
 
     def _is_malicious(self, query: str):
         patterns = [
@@ -102,7 +98,10 @@ class SolrSearchCollectionClient:
         return any(re.search(pattern, query, re.IGNORECASE) for pattern in patterns)
 
     def _retrieve_docs_with_knn(
-        self, row_begin: int, row_end: int, query: str, top_k: int = -1
+        self,
+        query: str,
+        top_k: int = -1,
+        chunk_size: int = 5000,
     ) -> dict:
         """Retrieves documents from Solr using KNN search.
         Args:
@@ -122,14 +121,32 @@ class SolrSearchCollectionClient:
                 f"{{!knn f=bert_vector }}{[float(w) for w in retriever_embedding[0]]}"
             )
 
-        return self.solr_client.search(
-            fl=["message_id", "message_content"],
-            q=knn_query,
-            qt="/export",
-            start=row_begin,
-            rows=row_end - row_begin,
-            sort="score desc",
-        )
+        rows_count = self._get_rows_count()
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = []
+            for i in range(0, rows_count, chunk_size):
+                futures.append(
+                    executor.submit(
+                        self.fetch_results_in_chunks, i, knn_query, chunk_size
+                    )
+                )
+
+            result = []
+            for future in futures:
+                result.append(future.result().docs)
+
+            return result
+
+    def fetch_results_in_chunks(self, start: int, knn_query: str, rows_count: int):
+        params = {
+            "q": knn_query,
+            "fl": "message_id, message_content, author_id, channel_id",
+            "start": start,
+            "rows": rows_count,
+            "cursorMark": "*",
+            "sort": "score desc, message_id asc",
+        }
+        return self.solr_client.search(**params)
 
     def _rerank_knn_results(self, query: str, solr_response: dict):
         """Re-ranks KNN results using semantic similarity.
@@ -141,7 +158,10 @@ class SolrSearchCollectionClient:
         """
         query_embedding = self.rerank_model.encode([query], normalize_embeddings=True)
 
-        candidate_texts = [(item["message_content"]) for item in solr_response.docs]
+        candidate_texts = []
+        for item in solr_response:
+            candidate_texts.append(item["message_content"])
+
         candidate_embeddings = self.rerank_model.encode(
             candidate_texts, normalize_embeddings=True
         )
@@ -152,10 +172,17 @@ class SolrSearchCollectionClient:
         # Zip together for sorting
         return sorted(
             zip(
-                candidate_texts,
+                solr_response,
                 scores,
-                [(item["message_id"]) for item in solr_response.docs],
             ),
             key=lambda x: x[1],
             reverse=True,
         )
+
+    def _get_rows_count(self):
+        rows_count_resp = make_solr_request(
+            url=f"{self.cfg.BASE_URL}{self.collection_name}/select?indent=on&q=*:*&wt=json&rows=0",
+            cfg=self.cfg,
+            params={},
+        )
+        return rows_count_resp["response"]["numFound"]
