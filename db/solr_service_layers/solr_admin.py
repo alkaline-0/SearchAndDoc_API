@@ -89,14 +89,14 @@ class SolrAdminClient:
             params = {
                 "action": "LIST",
             }
-            res = make_solr_request(params=params, url=self.admin_url, cfg=self.cfg)
+            res = make_solr_request(params=params, url=self._admin_url, cfg=self.cfg)
 
             for collection in res["collections"]:
                 params = {
                     "action": "DELETE",
                     "name": collection,
                 }
-                make_solr_request(params=params, url=self.admin_url, cfg=self.cfg)
+                make_solr_request(params=params, url=self._admin_url, cfg=self.cfg)
                 print(f"Collection '{collection}' deleted successfully.")
         except requests.exceptions.HTTPError as error:
             print(f"Failed to delete collection: {error}")
