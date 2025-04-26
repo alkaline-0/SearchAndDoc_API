@@ -1,3 +1,4 @@
+import os
 import re
 from concurrent.futures import ThreadPoolExecutor
 
@@ -122,7 +123,8 @@ class SolrSearchCollectionClient:
             )
 
         rows_count = self._get_rows_count()
-        with ThreadPoolExecutor(max_workers=4) as executor:
+        
+        with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
             futures = []
             for i in range(0, rows_count, chunk_size):
                 futures.append(
