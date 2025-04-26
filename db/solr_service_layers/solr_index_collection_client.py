@@ -48,17 +48,24 @@ class SolrIndexCollectionClient:
         """
         if not data:
             raise SolrValidationError("Data to index cannot be empty")
+        contents = [item["message_content"] for item in data]
+        embeddings = self.retriever_model.encode(contents)  
         with ThreadPoolExecutor(max_workers=self.workers) as executor:
             batches = [
                 data[i : i + self.batch_size]
                 for i in range(0, len(data), self.batch_size)
             ]
+            embedding_batches = [
+              embeddings[i: i + self.batch_size]
+              for i in range (0, len(embeddings), self.batch_size)
+            ]
             futures = [
                 executor.submit(
                     self._add_bert_vector_to_data,
-                    batch,
+                    batches[i],
+                    embedding_batches[i]
                 )
-                for batch in batches
+                for i in range(0,len(batches))
             ]
 
             for future in futures:
@@ -66,7 +73,7 @@ class SolrIndexCollectionClient:
 
         self.solr_client.commit(softCommit=soft_commit)
 
-    def _add_bert_vector_to_data(self, data: list[dict]) -> list[dict]:
+    def _add_bert_vector_to_data(self, data: list[dict], embeddings) -> list[dict]:
         """Adds BERT vector to the data.
 
         Args:
@@ -77,9 +84,7 @@ class SolrIndexCollectionClient:
 
         Raises:
             ValueError: If data is empty
-        """
-        contents = [item["message_content"] for item in data]
-        embeddings = self.retriever_model.encode(contents)  # Batch encode
+        """# Batch encode
 
         for i, item in enumerate(data):
             item["bert_vector"] = [float(w) for w in embeddings[i]]

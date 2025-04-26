@@ -1,4 +1,5 @@
 import re
+from concurrent.futures import ThreadPoolExecutor
 
 from sentence_transformers import util
 from solrq import Value
@@ -6,7 +7,9 @@ from solrq import Value
 from db.helpers.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
+from db.helpers.solr_request import make_solr_request
 from db.solr_utils.interfaces.pysolr_interface import SolrClientInterface
+from db.solr_utils.solr_config import SolrConfig
 from db.solr_utils.solr_exceptions import SolrError, SolrValidationError
 
 
@@ -16,6 +19,8 @@ class SolrSearchCollectionClient:
         solr_client: SolrClientInterface,
         retriever_model: SentenceTransformerInterface,
         rerank_model: SentenceTransformerInterface,
+        cfg: SolrConfig,
+        collection_name: str,
     ) -> None:
         """Creates a new Solr collection agent.
 
@@ -33,13 +38,15 @@ class SolrSearchCollectionClient:
         self.solr_client = solr_client
         self.rerank_model = rerank_model
         self.retriever_model = retriever_model
+        self.cfg = cfg
+        self.collection_name = collection_name
 
     def semantic_search(
         self,
         q: str,
         row_begin: int,
         row_end: int,
-        threshold: float = 0.2,
+        threshold: float = 0.1,
         top_k: int = -1,
     ) -> list[dict]:
         """Performs semantic search on the Solr collection.
@@ -56,12 +63,20 @@ class SolrSearchCollectionClient:
         safe_q = self.build_safe_query(raw_query=q)
         self._validate_search_params(query=safe_q, row_begin=row_begin, row_end=row_end)
         # First-stage retrieval: multi-qa-mpnet-base-dot-v1
-        solr_response = self._retrieve_docs_with_knn(
-            row_begin=row_begin, row_end=row_end, query=safe_q, top_k=top_k
+
+        rows_count_resp = make_solr_request(
+            url=f"{self.cfg.BASE_URL}{self.collection_name}/select?indent=on&q=*:*&wt=json&rows=0",
+            cfg=self.cfg,
+            params={},
+        )
+        rows_count = rows_count_resp["response"]["numFound"]
+
+        docs = self.parallel_retrieve_docs(
+            total_rows=rows_count, page_size=100, query=safe_q, top_k=top_k
         )
 
         # Second-stage re-ranking: all-mpnet-base-v2
-        reranked = self._rerank_knn_results(query=safe_q, solr_response=solr_response)
+        reranked = self.parallel_rerank(query=safe_q, all_docs=docs)
 
         search_results = []
         for text, score, msg_id in reranked:
@@ -71,6 +86,49 @@ class SolrSearchCollectionClient:
                 )
 
         return search_results
+
+    def parallel_retrieve_docs(
+        self,
+        total_rows: int,
+        page_size: int,
+        query: str,
+        top_k: int,
+        max_workers: int = 5,
+    ) -> list:
+        """Parallel document retrieval using pagination."""
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = []
+            for row_begin in range(0, total_rows, page_size):
+                future = executor.submit(
+                    self._retrieve_docs_with_knn,
+                    row_begin,
+                    row_begin + page_size,
+                    query,
+                    top_k,
+                )
+                futures.append(future)
+
+            results = []
+            for future in futures:
+                try:
+                    results.append(future.result().docs)
+                except Exception as e:
+                    print(f"Retrieval error: {e}")
+            return [doc for page in results for doc in page]
+
+    def parallel_rerank(self, query: str, all_docs: list, batch_size: int = 32) -> list:
+        """Batch-parallelized reranking."""
+        batches = [
+            all_docs[i : i + batch_size] for i in range(0, len(all_docs), batch_size)
+        ]
+
+        with ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(self._rerank_knn_results, query, {"docs": batch})
+                for batch in batches
+            ]
+
+            return [result for future in futures for result in future.result()]
 
     def build_safe_query(self, raw_query):
         return str(Value(raw_query))
@@ -135,7 +193,8 @@ class SolrSearchCollectionClient:
             List of tuples containing re-ranked results
         """
         query_embedding = self.rerank_model.encode([query], normalize_embeddings=True)
-        candidate_texts = [(item["message_content"]) for item in solr_response.docs]
+
+        candidate_texts = [(item["message_content"]) for item in solr_response["docs"]]
         candidate_embeddings = self.rerank_model.encode(
             candidate_texts, normalize_embeddings=True
         )
@@ -148,7 +207,7 @@ class SolrSearchCollectionClient:
             zip(
                 candidate_texts,
                 scores,
-                [(item["message_id"]) for item in solr_response.docs],
+                [(item["message_id"]) for item in solr_response["docs"]],
             ),
             key=lambda x: x[1],
             reverse=True,

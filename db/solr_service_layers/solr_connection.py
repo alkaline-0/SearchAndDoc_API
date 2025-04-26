@@ -3,13 +3,16 @@ from urllib.parse import urljoin
 import pysolr
 
 from db.helpers.sentence_transformer_impl import STSentenceTransformer
-from db.solr_service_layers.interfaces.solr_connection_interface import \
-    SolrConnectionInterface
+from db.solr_service_layers.interfaces.solr_connection_interface import (
+    SolrConnectionInterface,
+)
 from db.solr_service_layers.solr_admin import SolrAdminClient
-from db.solr_service_layers.solr_index_collection_client import \
-    SolrIndexCollectionClient
-from db.solr_service_layers.solr_search_collection_client import \
-    SolrSearchCollectionClient
+from db.solr_service_layers.solr_index_collection_client import (
+    SolrIndexCollectionClient,
+)
+from db.solr_service_layers.solr_search_collection_client import (
+    SolrSearchCollectionClient,
+)
 from db.solr_utils.solr_config import SolrConfig
 
 
@@ -26,7 +29,7 @@ class SolrConnection(SolrConnectionInterface):
             self.cfg.RETRIEVER_MODEL_NAME, device="mps"
         )
 
-    def _get_connection_obj(self, collection_name: str) -> None:
+    def _get_connection_obj(self, collection_name: str) -> pysolr.Solr:
         if self._admin_client.collection_exist(collection_name):
             collection_url = urljoin(self.cfg.BASE_URL, collection_name)
         else:
@@ -50,6 +53,8 @@ class SolrConnection(SolrConnectionInterface):
             solr_client=self._get_connection_obj(collection_name),
             retriever_model=retriever_model,
             rerank_model=self.rerank_model,
+            cfg=self.cfg,
+            collection_name=collection_name,
         )
 
     def get_index_client(self, collection_name: str) -> SolrIndexCollectionClient:

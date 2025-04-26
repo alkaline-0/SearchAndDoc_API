@@ -1,18 +1,10 @@
-import inspect
-import json
-from typing import Any
 from urllib.parse import urljoin
 
-import pysolr
 import requests
-from requests.auth import HTTPBasicAuth
 
+from db.helpers.solr_request import make_solr_request
 from db.solr_utils.solr_config import SolrConfig
-from db.solr_utils.solr_exceptions import (
-    SolrConnectionError,
-    SolrError,
-    SolrValidationError,
-)
+from db.solr_utils.solr_exceptions import SolrConnectionError, SolrValidationError
 
 
 class SolrAdminClient:
@@ -74,7 +66,7 @@ class SolrAdminClient:
             "collection.configName": "solrconfig.xml",
         }
         try:
-            self._make_solr_request(params=params)
+            make_solr_request(params=params, url=self._admin_url, cfg=self.cfg)
         except SolrConnectionError:
             raise SolrConnectionError()
         return collection_conn
@@ -97,14 +89,14 @@ class SolrAdminClient:
             params = {
                 "action": "LIST",
             }
-            res = self._make_solr_request(params=params)
+            res = make_solr_request(params=params, url=self.admin_url, cfg=self.cfg)
 
             for collection in res["collections"]:
                 params = {
                     "action": "DELETE",
                     "name": collection,
                 }
-                self._make_solr_request(params=params)
+                make_solr_request(params=params, url=self.admin_url, cfg=self.cfg)
                 print(f"Collection '{collection}' deleted successfully.")
         except requests.exceptions.HTTPError as error:
             print(f"Failed to delete collection: {error}")
@@ -126,43 +118,5 @@ class SolrAdminClient:
         params = {
             "action": "LIST",
         }
-        res = self._make_solr_request(params=params)
+        res = make_solr_request(params=params, url=self._admin_url, cfg=self.cfg)
         return collection_name in res["collections"]
-
-    def _make_solr_request(self, params: dict[str, Any]) -> dict:
-        """Makes HTTP request to Solr and handles response.
-
-        Args:
-            params: Request parameters
-
-        Returns:
-            Python object containing parsed JSON response with the result of the request
-
-        Raises:
-            requests.exceptions.HTTPError: If request fails
-            Exception: For other unexpected errors
-        """
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        basic = HTTPBasicAuth(self.cfg.USER_NAME, self.cfg.PASSWORD)
-        try:
-            response = requests.get(
-                self._admin_url,
-                params=params,
-                headers=headers,
-                auth=basic,
-            )
-            response.raise_for_status()
-            return json.loads(pysolr.force_unicode(response.content))
-
-        except (
-            requests.exceptions.RequestException
-        ) as error:  # Catch network-related errors
-            caller_frame = inspect.getouterframes(inspect.currentframe(), 2)
-            print(f"Solr request failed originating from {caller_frame[1][3]}: {error}")
-            raise SolrConnectionError(error)
-        except json.JSONDecodeError as error:  # Catch JSON decoding errors
-            print(f"Failed to decode JSON response: {error}")
-            raise SolrError(error)
-        except Exception as error:
-            print(f"Unexpected error occurred: {error}")
-            raise SolrError(error)
