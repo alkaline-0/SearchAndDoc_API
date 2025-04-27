@@ -67,10 +67,8 @@ class SolrSearchCollectionClient:
             query=safe_q,
             top_k=top_k,
         )
-
         # Second-stage re-ranking: all-mpnet-base-v2
         reranked = self._rerank_knn_results(query=safe_q, solr_response=docs)
-
         search_results = []
         for item in reranked:
             if round(item[1], 2) >= threshold:
@@ -123,7 +121,7 @@ class SolrSearchCollectionClient:
             )
 
         rows_count = self._get_rows_count()
-        
+
         with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
             futures = []
             for i in range(0, rows_count, chunk_size):

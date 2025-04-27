@@ -35,13 +35,11 @@ def make_solr_request(cfg: SolrConfig, params: dict[str, Any], url: str) -> dict
         response.raise_for_status()
         return json.loads(pysolr.force_unicode(response.content))
 
-    except (
-        requests.exceptions.RequestException
-    ) as error:  # Catch network-related errors
+    except requests.exceptions.RequestException as error:
         caller_frame = inspect.getouterframes(inspect.currentframe(), 2)
         print(f"Solr request failed originating from {caller_frame[1][3]}: {error}")
         raise SolrConnectionError(error)
-    except json.JSONDecodeError as error:  # Catch JSON decoding errors
+    except json.JSONDecodeError as error:
         print(f"Failed to decode JSON response: {error}")
         raise SolrError(error)
     except Exception as error:

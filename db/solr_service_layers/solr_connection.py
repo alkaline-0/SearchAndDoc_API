@@ -2,7 +2,9 @@ from urllib.parse import urljoin
 
 import pysolr
 
-from db.helpers.sentence_transformer_impl import STSentenceTransformer
+from db.helpers.interfaces.sentence_transformer_interface import (
+    SentenceTransformerInterface,
+)
 from db.solr_service_layers.interfaces.solr_connection_interface import (
     SolrConnectionInterface,
 )
@@ -22,12 +24,6 @@ class SolrConnection(SolrConnectionInterface):
     def __init__(self, cfg: SolrConfig) -> None:
         self._admin_client = SolrAdminClient(cfg=cfg)
         self.cfg = cfg
-        self.rerank_model = STSentenceTransformer(
-            self.cfg.RERANK_MODEL_NAME, device="mps"
-        )
-        self.retriever_model = STSentenceTransformer(
-            self.cfg.RETRIEVER_MODEL_NAME, device="mps"
-        )
 
     def _get_connection_obj(self, collection_name: str) -> pysolr.Solr:
         if self._admin_client.collection_exist(collection_name):
@@ -43,25 +39,29 @@ class SolrConnection(SolrConnectionInterface):
             always_commit=True,
         )
 
-    def get_search_client(self, collection_name: str) -> SolrSearchCollectionClient:
+    def get_search_client(
+        self,
+        collection_name: str,
+        rerank_model: SentenceTransformerInterface,
+        retriever_model: SentenceTransformerInterface,
+    ) -> SolrSearchCollectionClient:
         """Get client for specific collection."""
-        retriever_model = STSentenceTransformer(
-            self.cfg.RETRIEVER_MODEL_NAME, device="mps"
-        )
 
         return SolrSearchCollectionClient(
             solr_client=self._get_connection_obj(collection_name),
             retriever_model=retriever_model,
-            rerank_model=self.rerank_model,
+            rerank_model=rerank_model,
             cfg=self.cfg,
             collection_name=collection_name,
         )
 
-    def get_index_client(self, collection_name: str) -> SolrIndexCollectionClient:
+    def get_index_client(
+        self, collection_name: str, retriever_model: SentenceTransformerInterface
+    ) -> SolrIndexCollectionClient:
         """Get client for specific collection."""
         return SolrIndexCollectionClient(
             solr_client=self._get_connection_obj(collection_name),
-            retriever_model=self.retriever_model,
+            retriever_model=retriever_model,
         )
 
     def delete_all_collections(self) -> None:

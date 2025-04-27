@@ -13,4 +13,4 @@ class SolrConfig:
 
     RETRIEVER_MODEL_NAME: str = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
     RERANK_MODEL_NAME: str = "sentence-transformers/all-mpnet-base-v2"
-    THRESHOLD: float = 0.2
+    THRESHOLD: float = 0.0
