@@ -64,6 +64,7 @@ class SolrAdminClient:
             "name": collection_name,
             "numShards": num_shards,
             "collection.configName": "solrconfig.xml",
+            "replicationFactor": 2,
         }
         try:
             make_solr_request(params=params, url=self._admin_url, cfg=self.cfg)

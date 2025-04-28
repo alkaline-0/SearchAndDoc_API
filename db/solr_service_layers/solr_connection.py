@@ -30,11 +30,11 @@ class SolrConnection(SolrConnectionInterface):
             collection_url = urljoin(self.cfg.BASE_URL, collection_name)
         else:
             collection_url = self._admin_client.create_collection(
-                collection_name=collection_name
+                collection_name=collection_name, num_shards=10
             )
         return pysolr.Solr(
             url=collection_url,
-            timeout=10,
+            timeout=18000,
             auth=(self.cfg.USER_NAME, self.cfg.PASSWORD),
             always_commit=True,
         )

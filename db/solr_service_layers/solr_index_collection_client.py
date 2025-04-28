@@ -1,5 +1,6 @@
-from concurrent.futures import ThreadPoolExecutor
+import ray
 
+from db.helpers.encode import create_embeddings
 from db.helpers.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
@@ -28,50 +29,41 @@ class SolrIndexCollectionClient:
 
         self.solr_client = solr_client
         self.retriever_model = retriever_model
-        self.batch_size = 500
+        self.batch_size = 5000
         self.workers = 4
 
     def index_data(self, data: list[dict], soft_commit: bool) -> None:
-        """Indexes data into a Solr collection.
-
-        Args:
-            data: Data to index
-            soft_commit: Whether to perform a soft commit
-
-        Returns:
-            Str containing the response from Solr
-
-        Raises:
-            requests.exceptions.HTTPError: If Solr request fails
-            Exception: For other unexpected errors
-            ValueError: If data is empty
-        """
         if not data:
             raise SolrValidationError("Data to index cannot be empty")
-        contents = [item["message_content"] for item in data]
-        embeddings = self.retriever_model.encode(contents)
-        with ThreadPoolExecutor(max_workers=self.workers) as executor:
-            batches = [
-                data[i : i + self.batch_size]
-                for i in range(0, len(data), self.batch_size)
-            ]
-            embedding_batches = [
-                embeddings[i : i + self.batch_size]
-                for i in range(0, len(embeddings), self.batch_size)
-            ]
-            futures = [
-                executor.submit(
-                    self._add_bert_vector_to_data, batches[i], embedding_batches[i]
+
+        # Split data into batches upfront
+        data_batches = [
+            data[i : i + self.batch_size] for i in range(0, len(data), self.batch_size)
+        ]
+
+        # Parallel embedding generation
+        embedding_futures = [
+            create_embeddings.remote(
+                [item["message_content"] for item in batch],
+                self.retriever_model,
+                normalize_embeddings=False,
+            )
+            for batch in data_batches
+        ]
+
+        # Process embeddings as they complete
+        ready, not_ready = ray.wait(embedding_futures, num_returns=1)
+        while ready:
+            for future in ready:
+                batch_idx = embedding_futures.index(future)
+                self._add_bert_vector_to_data(
+                    data_batches[batch_idx], ray.get(future), soft_commit=soft_commit
                 )
-                for i in range(0, len(batches))
-            ]
+            ready, not_ready = ray.wait(not_ready, num_returns=1)
 
-            for future in futures:
-                future.result()
-
-        self.solr_client.commit(softCommit=soft_commit)
-
-    def _add_bert_vector_to_data(self, data: list[dict], embeddings) -> list[dict]:
+    def _add_bert_vector_to_data(
+        self, data: list[dict], embeddings, soft_commit: bool
+    ) -> list[dict]:
         """Adds BERT vector to the data.
 
         Args:
@@ -82,9 +74,9 @@ class SolrIndexCollectionClient:
 
         Raises:
             ValueError: If data is empty
-        """  # Batch encode
+        """
 
         for i, item in enumerate(data):
             item["bert_vector"] = [float(w) for w in embeddings[i]]
 
-        self.solr_client.add(data)
+        self.solr_client.add(data, softCommit=soft_commit)

@@ -175,3 +175,4 @@ cython_debug/
 var
 .vscode
 *.sample
+.DS_Store
