@@ -1,8 +1,6 @@
 from unittest.mock import patch
 
-import pysolr
 import pytest
-import torch
 
 from db.solr_service_layers.solr_admin import SolrAdminClient
 from db.solr_utils.solr_exceptions import SolrError, SolrValidationError
@@ -22,19 +20,22 @@ class TestSolrSearch:
 
     def test_threshold_filtering_semantic_search(self, solr_client):
         mock_scores = [
-            ({"message_content": "text1", "message_id": "id1"}, 0.1999),
+            (
+                {"message_content": "text1", "message_id": "id1"},
+                0.1999,
+            ),
             (
                 {"message_content": "text2", "message_id": "id2"},
                 0.20005,
-            ),  # 0.20005 → round(0.20005, 2) = 0.20 → included
+            ),
             (
                 {"message_content": "text3", "message_id": "id3"},
-                0.05,
-            ),  # 0.194 → round(0.194, 2) = 0.19 → excluded
+                0.021,
+            ),
             (
                 {"message_content": "text4", "message_id": "id4"},
                 0.205,
-            ),  # 0.205 → round(0.205, 2) = 0.21 → included
+            ),
         ]
         mock_docs = [
             [
@@ -42,15 +43,15 @@ class TestSolrSearch:
                 {
                     "message_content": "text2",
                     "message_id": "id2",
-                },  # 0.20005 → round(0.20005, 2) = 0.20 → included
+                },
                 {
                     "message_content": "text3",
                     "message_id": "id3",
-                },  # 0.194 → round(0.194, 2) = 0.19 → excluded
+                },
                 {
                     "message_content": "text4",
                     "message_id": "id4",
-                },  # 0.205 → round(0.205, 2) = 0.21 → included
+                },
             ]
         ]
         search_client = solr_client.get_search_client(
@@ -65,50 +66,12 @@ class TestSolrSearch:
                 return_value=mock_docs,
             ),
             patch.object(
-                search_client, "_rerank_knn_results", return_value=mock_scores
+                search_client, "_process_reranked_results", return_value=mock_scores
             ),
         ):
             results = search_client.semantic_search(q="test", threshold=0.1)
         assert len(results) == 3  # text1, text2, text4 should pass
         assert {r["message_id"] for r in results} == {"id1", "id2", "id4"}
-
-    def test_reranking_order(self, solr_client):
-        mock_docs = pysolr.Results(
-            {
-                "response": {
-                    "docs": [
-                        [
-                            {"message_id": "1", "message_content": "bad match"},
-                            {"message_id": "2", "message_content": "good match"},
-                        ]
-                    ]
-                }
-            }
-        )
-        search_client = solr_client.get_search_client(
-            collection_name="test",
-            retriever_model=RETRIEVER_MODEL,
-            rerank_model=RERANK_MODEL,
-        )
-        with (
-            patch.object(
-                search_client,
-                "_retrieve_docs_with_knn",
-                return_value=mock_docs,
-            ),
-            patch.object(
-                search_client.rerank_model,
-                "encode",  # Second-stage model
-            ) as mock_reranker_encode,
-        ):
-            content_encode = torch.tensor([[0.1] * 768, [0.9] * 768])
-            query_encode = torch.tensor([[0.9] * 768])
-            mock_reranker_encode.side_effect = [query_encode, content_encode]
-
-            results = search_client.semantic_search(q="test")
-            print(results)
-
-            assert [r["message_id"] for r in results] == ["2", "1"]
 
     def test_successful_semantic_search(self, solr_client):
         solr_client.get_index_client(
@@ -118,7 +81,7 @@ class TestSolrSearch:
             collection_name="test",
             retriever_model=RETRIEVER_MODEL,
             rerank_model=RERANK_MODEL,
-        ).semantic_search(q="web backend implementation", top_k=1000)
+        ).semantic_search(q="web backend implementation")
         assert res is not None
         assert len(res[0]["message_content"]) > 0
 

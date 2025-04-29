@@ -2,6 +2,7 @@ from collections.abc import Iterator
 
 import fixtup
 import pytest
+import ray
 
 from db.helpers.sentence_transformer_impl import STSentenceTransformer
 from db.solr_service_layers.solr_connection import SolrConnection
@@ -10,6 +11,9 @@ from tests.db.mocks.mock_solr_config import MockSolrConfig
 cfg = MockSolrConfig()
 RERANK_MODEL = STSentenceTransformer(cfg.RERANK_MODEL_NAME, device="mps")
 RETRIEVER_MODEL = STSentenceTransformer(cfg.RETRIEVER_MODEL_NAME, device="mps")
+
+if not ray.is_initialized():
+    ray.init()
 
 
 @pytest.fixture(autouse=True)

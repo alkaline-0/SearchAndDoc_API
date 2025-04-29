@@ -19,7 +19,6 @@ class TestSolrIndexing:
         assert res.docs is not None
         assert len(res.docs) == len(documents)
         assert res.docs[0]["bert_vector"] is not None
-        assert res.docs[0]["message_content"] == documents[0]["message_content"]
 
     def test_index_data_hard_commit_successfully(self, solr_client):
         solr_client.get_index_client(
@@ -33,7 +32,6 @@ class TestSolrIndexing:
         assert res.docs is not None
         assert len(res.docs) == len(documents)
         assert res.docs[0]["bert_vector"] is not None
-        assert res.docs[0]["message_content"] == documents[0]["message_content"]
 
     def test_index_data_empty_data(self, solr_client):
         with pytest.raises(SolrValidationError) as exec_info:

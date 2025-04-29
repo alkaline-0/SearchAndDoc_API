@@ -56,18 +56,13 @@ class SolrSearchCollectionClient:
         )
 
         # Phase 1: Retrieve initial candidates (optimized Solr query)
-        docs = self._retrieve_docs_with_knn(
+        [docs] = self._retrieve_docs_with_knn(
             embedding=ray.get(retriever_future), total_rows=self._get_rows_count()
         )
+
         candidate_texts = []
-        for doc in docs:
-            for item in doc:
-                candidate_texts.append(item["message_content"])
-        batch_size = 256  # Tune based on GPU memory
-        text_batches = [
-            candidate_texts[i : i + batch_size]
-            for i in range(0, len(candidate_texts), batch_size)
-        ]
+        for item in docs:
+            candidate_texts.append(item["message_content"])
 
         # Parallel re-ranking phase
         query_rerank_future = create_embeddings.remote(
@@ -75,16 +70,26 @@ class SolrSearchCollectionClient:
         )
 
         candidate_futures = create_embeddings.remote(
-            model=self.rerank_model, sentences=text_batches, normalize_embeddings=True
+            model=self.rerank_model,
+            sentences=candidate_texts,
+            normalize_embeddings=True,
         )
 
         # Process results as they complete
         query_embedding = ray.get(query_rerank_future)
         candidate_embeddings = ray.get(candidate_futures)
         # Re-rank and filter results
-        return self._process_reranked_results(
-            query_embedding, candidate_embeddings, docs, threshold
+        sorted_reranking_results = self._process_reranked_results(
+            query_embedding=query_embedding,
+            candidate_embeddings=candidate_embeddings,
+            docs=docs,
         )
+
+        return [
+            item[0]
+            for item in sorted_reranking_results
+            if round(item[1], 2) >= threshold
+        ]
 
     def build_safe_query(self, raw_query) -> str:
         return str(Value(raw_query))
@@ -179,15 +184,16 @@ class SolrSearchCollectionClient:
         return rows_count_resp["response"]["numFound"]
 
     def _process_reranked_results(
-        self, query_embedding, candidate_embeddings, docs, threshold
-    ) -> list[dict]:
+        self, query_embedding, candidate_embeddings, docs
+    ) -> list[tuple]:
         """Efficient result processing with tensor operations"""
         scores = util.cos_sim(query_embedding, candidate_embeddings)[0].cpu().tolist()
 
-        return [
-            doc
-            for doc, score in sorted(
-                zip(docs, scores), key=lambda x: x[1], reverse=True
-            )
-            if round(score, 2) >= threshold
-        ]
+        return sorted(
+            zip(
+                docs,
+                scores,
+            ),
+            key=lambda x: x[1],
+            reverse=True,
+        )
