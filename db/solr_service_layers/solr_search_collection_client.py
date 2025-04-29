@@ -1,7 +1,6 @@
 import re
 
 import ray
-import torch
 from sentence_transformers import util
 from solrq import Value
 
@@ -53,16 +52,17 @@ class SolrSearchCollectionClient:
 
         # Parallel embedding generation for retrieval for the query
         retriever_future = create_embeddings.remote(
-            self.retriever_model, [safe_q], normalize=False
+            model=self.retriever_model, sentences=[safe_q], normalize_embeddings=False
         )
 
         # Phase 1: Retrieve initial candidates (optimized Solr query)
-        [docs] = self._retrieve_docs_with_knn(
-            retriever_embedding=ray.get(retriever_future),
+        docs = self._retrieve_docs_with_knn(
+            embedding=ray.get(retriever_future), total_rows=self._get_rows_count()
         )
-
-        # Prepare candidate texts for parallel processing
-        candidate_texts = [item["message_content"] for item in docs]
+        candidate_texts = []
+        for doc in docs:
+            for item in doc:
+                candidate_texts.append(item["message_content"])
         batch_size = 256  # Tune based on GPU memory
         text_batches = [
             candidate_texts[i : i + batch_size]
@@ -70,19 +70,17 @@ class SolrSearchCollectionClient:
         ]
 
         # Parallel re-ranking phase
-        query_rerank_future = create_embeddings().remote(
-            self.rerank_model, [safe_q], normalize=True
+        query_rerank_future = create_embeddings.remote(
+            model=self.rerank_model, sentences=[safe_q], normalize_embeddings=True
         )
 
-        candidate_futures = [
-            create_embeddings.remote(self.rerank_model, batch, normalize=True)
-            for batch in text_batches
-        ]
+        candidate_futures = create_embeddings.remote(
+            model=self.rerank_model, sentences=text_batches, normalize_embeddings=True
+        )
 
         # Process results as they complete
         query_embedding = ray.get(query_rerank_future)
-        candidate_embeddings = torch.cat(ray.get(candidate_futures), dim=0)
-
+        candidate_embeddings = ray.get(candidate_futures)
         # Re-rank and filter results
         return self._process_reranked_results(
             query_embedding, candidate_embeddings, docs, threshold
@@ -90,6 +88,21 @@ class SolrSearchCollectionClient:
 
     def build_safe_query(self, raw_query) -> str:
         return str(Value(raw_query))
+
+    def retrieve_all_docs(self, embedding: list, total_rows: int) -> list:
+        """Ray-optimized parallel fetching for large result sets"""
+        chunk_size = 5000
+        futures = []
+        for start in range(0, total_rows, chunk_size):
+            actual_rows = min(chunk_size, total_rows - start)
+            batch_res = self._fetch_results_in_chunks(
+                q="*:*", start=start, rows_count=actual_rows
+            )
+
+            if len(batch_res) > 0:
+                futures.append(batch_res)
+
+        return futures
 
     def _validate_search_params(self, query: str) -> None:
         """Validate search parameters."""
@@ -108,36 +121,25 @@ class SolrSearchCollectionClient:
         ]
         return any(re.search(pattern, query, re.IGNORECASE) for pattern in patterns)
 
-    def _retrieve_docs_with_knn(
-        self,
-        retriever_embedding,
-    ) -> list[list[dict]]:
-        """Optimized Solr KNN retrieval with Ray-friendly design"""
-        embedding_str = (
-            "[" + ",".join(map(str, retriever_embedding[0].cpu().numpy())) + "]"
-        )
-
-        # Parallel fetch for very large top_k
-        return self._parallel_solr_fetch(embedding_str, rows=self._get_rows_count())
-
-    def _parallel_solr_fetch(self, embedding_str: str, total_rows: int) -> list:
+    def _retrieve_docs_with_knn(self, embedding: list, total_rows: int) -> list:
         """Ray-optimized parallel fetching for large result sets"""
         chunk_size = 5000
         futures = []
-
+        knn_q = "{!knn f=bert_vector topK=200}" + str([float(w) for w in embedding[0]])
         for start in range(0, total_rows, chunk_size):
             actual_rows = min(chunk_size, total_rows - start)
-            futures.append(
-                self._fetch_results_in_chunks(embedding_str, start, actual_rows)
+            batch_res = self._fetch_results_in_chunks(
+                q=knn_q, start=start, rows_count=actual_rows
             )
 
-        return ray.get(futures)
+            if len(batch_res) > 0:
+                futures.append(batch_res)
 
-    def _fetch_results_in_chunks(
-        self, start: int, knn_query: str, rows_count: int
-    ) -> list:
+        return futures
+
+    def _fetch_results_in_chunks(self, start: int, q: str, rows_count: int) -> list:
         params = {
-            "q": knn_query,
+            "q": q,
             "start": start,
             "fl": "message_id, message_content, author_id, channel_id",
             "rows": rows_count,
