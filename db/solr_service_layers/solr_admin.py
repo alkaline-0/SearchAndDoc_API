@@ -66,10 +66,8 @@ class SolrAdminClient:
             "collection.configName": "solrconfig.xml",
             "replicationFactor": 2,
         }
-        try:
-            make_solr_request(params=params, url=self._admin_url, cfg=self.cfg)
-        except SolrConnectionError:
-            raise SolrConnectionError()
+        make_solr_request(params=params, url=self._admin_url, cfg=self.cfg)
+       
         return collection_conn
 
     def delete_all_collections(self) -> dict:

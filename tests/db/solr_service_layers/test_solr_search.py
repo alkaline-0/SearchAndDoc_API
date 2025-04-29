@@ -118,3 +118,14 @@ class TestSolrSearch:
             rerank_model=RERANK_MODEL,
         ).solr_client.search("message_id:5")
         assert len(results) == 1  # Fails if always_commit isn't working
+
+    def test_retrieve_all_docs_successfully(self, solr_client):
+      solr_client.get_index_client(
+            "test", retriever_model=RETRIEVER_MODEL
+        ).index_data(documents, soft_commit=True)
+      [res] = solr_client.get_search_client(
+            collection_name="test",
+            retriever_model=RETRIEVER_MODEL,
+            rerank_model=RERANK_MODEL,
+        ).retrieve_all_docs()
+      assert(len(res)) == len(documents)

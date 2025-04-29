@@ -94,10 +94,11 @@ class SolrSearchCollectionClient:
     def build_safe_query(self, raw_query) -> str:
         return str(Value(raw_query))
 
-    def retrieve_all_docs(self, embedding: list, total_rows: int) -> list:
+    def retrieve_all_docs(self) -> list:
         """Ray-optimized parallel fetching for large result sets"""
         chunk_size = 5000
         futures = []
+        total_rows = self._get_rows_count()
         for start in range(0, total_rows, chunk_size):
             actual_rows = min(chunk_size, total_rows - start)
             batch_res = self._fetch_results_in_chunks(

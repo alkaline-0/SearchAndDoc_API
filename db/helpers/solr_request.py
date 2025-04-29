@@ -39,9 +39,6 @@ def make_solr_request(cfg: SolrConfig, params: dict[str, Any], url: str) -> dict
         caller_frame = inspect.getouterframes(inspect.currentframe(), 2)
         print(f"Solr request failed originating from {caller_frame[1][3]}: {error}")
         raise SolrConnectionError(error)
-    except json.JSONDecodeError as error:
-        print(f"Failed to decode JSON response: {error}")
-        raise SolrError(error)
     except Exception as error:
         print(f"Unexpected error occurred: {error}")
         raise SolrError(error)
