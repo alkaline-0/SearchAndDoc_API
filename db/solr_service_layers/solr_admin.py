@@ -23,7 +23,7 @@ class SolrAdminClient(SolrAdminInterface):
         self._admin_url = urljoin(cfg.BASE_URL, "admin/collections")
 
     def create_collection(
-        self, collection_name: str, num_shards: int = 1, replica_count: int = 2
+        self, collection_name: str, num_shards: int = 1, replica_count: int = 1
     ) -> str:
         """Creates a new Solr collection.
 

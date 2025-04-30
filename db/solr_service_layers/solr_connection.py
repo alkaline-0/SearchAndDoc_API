@@ -22,10 +22,9 @@ from db.solr_utils.solr_config import SolrConfig
 class SolrConnection(SolrConnectionInterface):
     """Manages Solr connection and client creation."""
 
-    _pysolr_obj: pysolr.Solr
-
     def __init__(self, cfg: SolrConfig) -> None:
         self.cfg = cfg
+        self._pysolr_obj = None
 
     def _get_connection_obj(self, collection_url: str) -> pysolr.Solr:
         if not self._pysolr_obj:

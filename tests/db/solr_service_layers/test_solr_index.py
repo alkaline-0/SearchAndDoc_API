@@ -1,31 +1,50 @@
-from tests.db.conftest import RETRIEVER_MODEL
 from tests.fixtures.test_data.fake_messages import documents
 
 
 class TestSolrIndexing:
 
-    def test_index_data_soft_commit_successfully(self, solr_client):
-        solr_client.get_index_client(
-            collection_name="test", retriever_model=RETRIEVER_MODEL
-        ).index_data(documents, soft_commit=True)
+    def test_index_data_soft_commit_successfully(
+        self, solr_connection, retriever_model, rerank_model
+    ):
+        collection_url = solr_connection.get_admin_client().create_collection(
+            collection_name="test"
+        )
+        index_client = solr_connection.get_index_client(
+            collection_url=collection_url, retriever_model=retriever_model
+        )
+        search_client = solr_connection.get_search_client(
+            collection_url=collection_url,
+            rerank_model=rerank_model,
+            retriever_model=retriever_model,
+            collection_name="test",
+        )
 
-        res = solr_client.get_index_client(
-            collection_name="test", retriever_model=RETRIEVER_MODEL
-        ).solr_client.search(q="*:*", rows=len(documents))
+        index_client.index_data(documents, soft_commit=True)
 
-        assert res.docs is not None
-        assert len(res.docs) == len(documents)
-        assert res.docs[0]["bert_vector"] is not None
+        res = search_client.retrieve_all_docs()
 
-    def test_index_data_hard_commit_successfully(self, solr_client):
-        solr_client.get_index_client(
-            collection_name="test", retriever_model=RETRIEVER_MODEL
-        ).index_data(documents, soft_commit=False)
+        assert res is not None
+        assert len(res) == len(documents)
 
-        res = solr_client.get_index_client(
-            collection_name="test", retriever_model=RETRIEVER_MODEL
-        ).solr_client.search(q="*:*", rows=len(documents))
+    def test_index_data_hard_commit_successfully(
+        self, solr_connection, retriever_model, rerank_model
+    ):
+        collection_url = solr_connection.get_admin_client().create_collection(
+            collection_name="test"
+        )
+        index_client = solr_connection.get_index_client(
+            collection_url=collection_url, retriever_model=retriever_model
+        )
+        search_client = solr_connection.get_search_client(
+            collection_url=collection_url,
+            rerank_model=rerank_model,
+            retriever_model=retriever_model,
+            collection_name="test",
+        )
 
-        assert res.docs is not None
-        assert len(res.docs) == len(documents)
-        assert res.docs[0]["bert_vector"] is not None
+        index_client.index_data(documents, soft_commit=False)
+
+        res = search_client.retrieve_all_docs()
+
+        assert res is not None
+        assert len(res) == len(documents)

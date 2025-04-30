@@ -48,16 +48,14 @@ class SolrSearchCollectionClient(SolrSearchInterface):
         q: str,
         threshold: float = 0.1,
     ) -> list[dict]:
-        safe_q = self._build_safe_query(raw_query=q)
         if self._is_malicious(q):
             raise SolrError("Cannot perform this query")
 
-        # Parallel embedding generation for retrieval for the query
+        safe_q = self._build_safe_query(raw_query=q)
         retriever_future = create_embeddings.remote(
             model=self.retriever_model, sentences=[safe_q], normalize_embeddings=False
         )
 
-        # Phase 1: Retrieve initial candidates (optimized Solr query)
         [docs] = self._retrieve_docs_with_knn(
             embedding=ray.get(retriever_future), total_rows=self._get_rows_count()
         )
@@ -66,7 +64,6 @@ class SolrSearchCollectionClient(SolrSearchInterface):
         for item in docs:
             candidate_texts.append(item["message_content"])
 
-        # Parallel re-ranking phase
         query_rerank_future = create_embeddings.remote(
             model=self.rerank_model, sentences=[safe_q], normalize_embeddings=True
         )
@@ -77,10 +74,9 @@ class SolrSearchCollectionClient(SolrSearchInterface):
             normalize_embeddings=True,
         )
 
-        # Process results as they complete
         query_embedding = ray.get(query_rerank_future)
         candidate_embeddings = ray.get(candidate_futures)
-        # Re-rank and filter results
+
         sorted_reranking_results = self._process_reranked_results(
             query_embedding=query_embedding,
             candidate_embeddings=candidate_embeddings,
@@ -99,7 +95,7 @@ class SolrSearchCollectionClient(SolrSearchInterface):
     def retrieve_all_docs(self) -> list:
         """Ray-optimized parallel fetching for large result sets"""
         chunk_size = 5000
-        futures = []
+        rows = []
         total_rows = self._get_rows_count()
         for start in range(0, total_rows, chunk_size):
             actual_rows = min(chunk_size, total_rows - start)
@@ -108,17 +104,17 @@ class SolrSearchCollectionClient(SolrSearchInterface):
             )
 
             if len(batch_res) > 0:
-                futures.append(batch_res)
-
-        return futures
+                rows.append(batch_res)
+        [response] = rows
+        return response
 
     def _is_malicious(self, query: str) -> bool:
         patterns = [
-            r"drop\s",  # Catches "DROP TABLE", "DROP COLLECTION"
+            r"drop\s",
             r"delete\s",
-            r";\s*--",  # SQL-style comments
+            r";\s*--",
             r"\b(shutdown|truncate)\b",
-            r"(?i)(drop|delete|alter)",  # Case-insensitive
+            r"(?i)(drop|delete|alter)",
         ]
         return any(re.search(pattern, query, re.IGNORECASE) for pattern in patterns)
 
