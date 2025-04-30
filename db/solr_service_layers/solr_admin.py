@@ -3,11 +3,11 @@ from urllib.parse import urljoin
 import requests
 
 from db.helpers.solr_request import make_solr_request
+from db.solr_service_layers.interfaces.solr_admin_interface import SolrAdminInterface
 from db.solr_utils.solr_config import SolrConfig
-from db.solr_utils.solr_exceptions import SolrConnectionError, SolrValidationError
 
 
-class SolrAdminClient:
+class SolrAdminClient(SolrAdminInterface):
     def __init__(self, cfg: SolrConfig) -> None:
         """Creates a new Solr Admin obj.
 
@@ -19,23 +19,12 @@ class SolrAdminClient:
         Raises:
             ValueErrorException: for any missing params
         """
-
-        self._validate_credentials(cfg)
-
         self.cfg = cfg
         self._admin_url = urljoin(cfg.BASE_URL, "admin/collections")
 
-    def _validate_credentials(self, cfg):
-        """Handles None, empty strings, and whitespace."""
-        if cfg.USER_NAME is None or cfg.PASSWORD is None:
-            raise SolrValidationError("Username/password cannot be None")
-
-        if not cfg.USER_NAME.strip() or not cfg.PASSWORD.strip():
-            raise SolrValidationError(
-                "Username/password cannot be empty or whitespace-only"
-            )
-
-    def create_collection(self, collection_name: str, num_shards: int = 1) -> str:
+    def create_collection(
+        self, collection_name: str, num_shards: int = 1, replica_count: int = 2
+    ) -> str:
         """Creates a new Solr collection.
 
         Args:
@@ -48,26 +37,16 @@ class SolrAdminClient:
             requests.exceptions.HTTPError: If Solr request fails
             Exception: For other unexpected errors
         """
-
-        if not collection_name:
-            raise SolrValidationError("Collection name cannot be empty")
-        if num_shards <= 0:
-            raise SolrValidationError("Number of shards must be greater than 0")
-
         collection_conn = urljoin(self.cfg.BASE_URL, collection_name)
-        if self.collection_exist(collection_name):
-            # TODO: log failure of collection creation
-            return collection_conn
-
         params = {
             "action": "CREATE",
             "name": collection_name,
             "numShards": num_shards,
             "collection.configName": "solrconfig.xml",
-            "replicationFactor": 2,
+            "replicationFactor": replica_count,
         }
         make_solr_request(params=params, url=self._admin_url, cfg=self.cfg)
-       
+
         return collection_conn
 
     def delete_all_collections(self) -> dict:

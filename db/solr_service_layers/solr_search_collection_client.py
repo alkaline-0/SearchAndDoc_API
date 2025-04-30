@@ -9,12 +9,13 @@ from db.helpers.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
 from db.helpers.solr_request import make_solr_request
+from db.solr_service_layers.interfaces.solr_search_interface import SolrSearchInterface
 from db.solr_utils.interfaces.pysolr_interface import SolrClientInterface
 from db.solr_utils.solr_config import SolrConfig
-from db.solr_utils.solr_exceptions import SolrError, SolrValidationError
+from db.solr_utils.solr_exceptions import SolrError
 
 
-class SolrSearchCollectionClient:
+class SolrSearchCollectionClient(SolrSearchInterface):
     def __init__(
         self,
         solr_client: SolrClientInterface,
@@ -47,8 +48,9 @@ class SolrSearchCollectionClient:
         q: str,
         threshold: float = 0.1,
     ) -> list[dict]:
-        safe_q = self.build_safe_query(raw_query=q)
-        self._validate_search_params(query=safe_q)
+        safe_q = self._build_safe_query(raw_query=q)
+        if self._is_malicious(q):
+            raise SolrError("Cannot perform this query")
 
         # Parallel embedding generation for retrieval for the query
         retriever_future = create_embeddings.remote(
@@ -91,7 +93,7 @@ class SolrSearchCollectionClient:
             if round(item[1], 2) >= threshold
         ]
 
-    def build_safe_query(self, raw_query) -> str:
+    def _build_safe_query(self, raw_query) -> str:
         return str(Value(raw_query))
 
     def retrieve_all_docs(self) -> list:
@@ -109,13 +111,6 @@ class SolrSearchCollectionClient:
                 futures.append(batch_res)
 
         return futures
-
-    def _validate_search_params(self, query: str) -> None:
-        """Validate search parameters."""
-        if not query:
-            raise SolrValidationError("Query string cannot be empty")
-        if self._is_malicious(query):
-            raise SolrError("Cannot perform this query")
 
     def _is_malicious(self, query: str) -> bool:
         patterns = [

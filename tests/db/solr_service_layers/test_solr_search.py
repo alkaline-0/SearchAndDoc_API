@@ -3,21 +3,12 @@ from unittest.mock import patch
 import pytest
 
 from db.solr_service_layers.solr_admin import SolrAdminClient
-from db.solr_utils.solr_exceptions import SolrError, SolrValidationError
+from db.solr_utils.solr_exceptions import SolrError
 from tests.db.conftest import RERANK_MODEL, RETRIEVER_MODEL
 from tests.fixtures.test_data.fake_messages import documents
 
 
 class TestSolrSearch:
-    def test_empty_query_semantic_search(self, solr_client):
-        with pytest.raises(SolrValidationError) as exec_info:
-            solr_client.get_search_client(
-                collection_name="test",
-                retriever_model=RETRIEVER_MODEL,
-                rerank_model=RERANK_MODEL,
-            ).semantic_search(q="")
-        assert "Query string cannot be empty" in str(exec_info.value)
-
     def test_threshold_filtering_semantic_search(self, solr_client):
         mock_scores = [
             (
@@ -120,12 +111,12 @@ class TestSolrSearch:
         assert len(results) == 1  # Fails if always_commit isn't working
 
     def test_retrieve_all_docs_successfully(self, solr_client):
-      solr_client.get_index_client(
+        solr_client.get_index_client(
             "test", retriever_model=RETRIEVER_MODEL
         ).index_data(documents, soft_commit=True)
-      [res] = solr_client.get_search_client(
+        [res] = solr_client.get_search_client(
             collection_name="test",
             retriever_model=RETRIEVER_MODEL,
             rerank_model=RERANK_MODEL,
         ).retrieve_all_docs()
-      assert(len(res)) == len(documents)
+        assert (len(res)) == len(documents)

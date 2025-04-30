@@ -4,11 +4,11 @@ from db.helpers.encode import create_embeddings
 from db.helpers.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
+from db.solr_service_layers.interfaces.solr_index_interface import SolrIndexInerface
 from db.solr_utils.interfaces.pysolr_interface import SolrClientInterface
-from db.solr_utils.solr_exceptions import SolrValidationError
 
 
-class SolrIndexCollectionClient:
+class SolrIndexCollectionClient(SolrIndexInerface):
     def __init__(
         self,
         solr_client: SolrClientInterface,
@@ -22,9 +22,6 @@ class SolrIndexCollectionClient:
             rerank_model: SentenceTransformerInterface for re-ranking
 
         Returns: None
-
-        Raises:
-            ValueErrorException: for any missing params
         """
 
         self.solr_client = solr_client
@@ -33,9 +30,6 @@ class SolrIndexCollectionClient:
         self.workers = 4
 
     def index_data(self, data: list[dict], soft_commit: bool) -> None:
-        if not data:
-            raise SolrValidationError("Data to index cannot be empty")
-
         # Split data into batches upfront
         data_batches = [
             data[i : i + self.batch_size] for i in range(0, len(data), self.batch_size)
