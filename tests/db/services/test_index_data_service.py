@@ -1,7 +1,7 @@
 from tests.fixtures.test_data.fake_messages import documents
 
 
-class TestIndexingDataService:
+class TestIndexDataService:
 
     def test_index_data_soft_commit_successfully(
         self, solr_connection, retriever_model, rerank_model

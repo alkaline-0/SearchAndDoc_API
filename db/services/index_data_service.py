@@ -1,7 +1,7 @@
 import ray
 
-from db.services.interfaces.indexing_data_service_interface import (
-    IndexingDataServiceInterface,
+from db.services.interfaces.index_data_service_interface import (
+    IndexDataServiceInterface,
 )
 from db.utils.encode import create_embeddings
 from db.utils.interfaces.pysolr_interface import SolrClientInterface
@@ -10,7 +10,7 @@ from db.utils.interfaces.sentence_transformer_interface import (
 )
 
 
-class IndexingDataService(IndexingDataServiceInterface):
+class IndexDataService(IndexDataServiceInterface):
     def __init__(
         self,
         solr_client: SolrClientInterface,

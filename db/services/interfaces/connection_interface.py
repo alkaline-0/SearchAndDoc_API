@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 from db.services.interfaces.collection_admin_interface import CollectionAdminInterface
-from db.services.interfaces.indexing_data_service_interface import (
-    IndexingDataServiceInterface,
+from db.services.interfaces.index_data_service_interface import (
+    IndexDataServiceInterface,
 )
 from db.services.interfaces.semantic_search_service_interface import (
     SemanticSearchServiceInterface,
@@ -28,7 +28,7 @@ class ConnectionInterface(ABC):
     @abstractmethod
     def get_index_client(
         self, retriever_model: SentenceTransformerInterface, collection_url: str
-    ) -> IndexingDataServiceInterface:
+    ) -> IndexDataServiceInterface:
         """Get client for specific collection."""
 
     @abstractmethod

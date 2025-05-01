@@ -2,11 +2,11 @@ import pysolr
 
 from db.config.solr_config import SolrConfig
 from db.services.admin import CollectionAdmin
-from db.services.indexing_data_service import IndexingDataService
+from db.services.index_data_service import IndexDataService
 from db.services.interfaces.collection_admin_interface import CollectionAdminInterface
 from db.services.interfaces.connection_interface import ConnectionInterface
-from db.services.interfaces.indexing_data_service_interface import (
-    IndexingDataServiceInterface,
+from db.services.interfaces.index_data_service_interface import (
+    IndexDataServiceInterface,
 )
 from db.services.interfaces.semantic_search_service_interface import (
     SemanticSearchServiceInterface,
@@ -56,8 +56,8 @@ class ConnectionFactory(ConnectionInterface):
 
     def get_index_client(
         self, retriever_model: SentenceTransformerInterface, collection_url: str
-    ) -> IndexingDataServiceInterface:
-        return IndexingDataService(
+    ) -> IndexDataServiceInterface:
+        return IndexDataService(
             solr_client=self._get_connection_obj(collection_url=collection_url),
             retriever_model=retriever_model,
         )

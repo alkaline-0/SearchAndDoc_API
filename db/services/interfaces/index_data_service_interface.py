@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class IndexingDataServiceInterface(ABC):
+class IndexDataServiceInterface(ABC):
     """Interface for Solr connection and client creation."""
 
     @abstractmethod

@@ -4,7 +4,7 @@ import ray
 from db.utils.encode import create_embeddings
 
 
-def test_normalize_create_embeddings_successfully(rerank_model):
+def test_create_embeddings_successfully_with_normalize(rerank_model):
     sentences = [
         "The weather is lovely today.",
         "It's so sunny outside!",
@@ -20,7 +20,7 @@ def test_normalize_create_embeddings_successfully(rerank_model):
     assert all(abs(n - 1.0) < 1e-6 for n in norms)
 
 
-def test_create_none_normalized_emeddings_successfully(retriever_model):
+def test_create_emeddings_successfully_without_normalize(retriever_model):
     sentences = [
         "The weather is lovely today.",
         "It's so sunny outside!",
