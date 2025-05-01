@@ -1,6 +1,6 @@
 import pytest
 
-from db.solr_utils.solr_exceptions import SolrConnectionError, SolrValidationError
+from db.utils.exceptions import SolrConnectionError, SolrValidationError
 from models.solr_collection_model import SolrCollectionModel
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 

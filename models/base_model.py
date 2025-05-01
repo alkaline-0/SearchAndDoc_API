@@ -1,5 +1,5 @@
-from db.solr_service_layers.solr_connection import SolrConnection
-from db.solr_utils.solr_config import SolrConfig
+from db.config.solr_config import SolrConfig
+from db.services.connection import ConnectionFactory
 
 
 class BaseModel:
@@ -11,4 +11,4 @@ class BaseModel:
         pass
 
     def get_connection_object(self, cfg: SolrConfig):
-        return SolrConnection(cfg)
+        return ConnectionFactory(cfg)

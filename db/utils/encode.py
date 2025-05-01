@@ -1,6 +1,6 @@
 import ray
 
-from db.helpers.sentence_transformer_impl import STSentenceTransformer
+from db.utils.sentence_transformer import STSentenceTransformer
 
 
 @ray.remote(num_returns=1)

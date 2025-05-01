@@ -2,12 +2,12 @@ from urllib.parse import urljoin
 
 import requests
 
-from db.helpers.solr_request import make_solr_request
-from db.solr_service_layers.interfaces.solr_admin_interface import SolrAdminInterface
-from db.solr_utils.solr_config import SolrConfig
+from db.config.solr_config import SolrConfig
+from db.services.interfaces.collection_admin_interface import CollectionAdminInterface
+from db.utils.request import request
 
 
-class SolrAdminClient(SolrAdminInterface):
+class CollectionAdmin(CollectionAdminInterface):
     def __init__(self, cfg: SolrConfig) -> None:
         """Creates a new Solr Admin obj.
 
@@ -45,7 +45,7 @@ class SolrAdminClient(SolrAdminInterface):
             "collection.configName": "solrconfig.xml",
             "replicationFactor": replica_count,
         }
-        make_solr_request(params=params, url=self._admin_url, cfg=self.cfg)
+        request(params=params, url=self._admin_url, cfg=self.cfg)
 
         return collection_conn
 
@@ -67,14 +67,14 @@ class SolrAdminClient(SolrAdminInterface):
             params = {
                 "action": "LIST",
             }
-            res = make_solr_request(params=params, url=self._admin_url, cfg=self.cfg)
+            res = request(params=params, url=self._admin_url, cfg=self.cfg)
 
             for collection in res["collections"]:
                 params = {
                     "action": "DELETE",
                     "name": collection,
                 }
-                make_solr_request(params=params, url=self._admin_url, cfg=self.cfg)
+                request(params=params, url=self._admin_url, cfg=self.cfg)
                 print(f"Collection '{collection}' deleted successfully.")
         except requests.exceptions.HTTPError as error:
             print(f"Failed to delete collection: {error}")
@@ -96,5 +96,5 @@ class SolrAdminClient(SolrAdminInterface):
         params = {
             "action": "LIST",
         }
-        res = make_solr_request(params=params, url=self._admin_url, cfg=self.cfg)
+        res = request(params=params, url=self._admin_url, cfg=self.cfg)
         return collection_name in res["collections"]

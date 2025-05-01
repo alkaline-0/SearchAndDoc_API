@@ -2,11 +2,11 @@ from unittest.mock import patch
 
 import pytest
 
-from db.solr_utils.solr_exceptions import SolrError
+from db.utils.exceptions import SolrError
 from tests.fixtures.test_data.fake_messages import documents
 
 
-class TestSolrSearch:
+class TestSemanticSearchService:
     def test_threshold_filtering_semantic_search(
         self, solr_connection, retriever_model, rerank_model
     ):

@@ -1,6 +1,6 @@
 from sentence_transformers import SentenceTransformer
 
-from db.helpers.interfaces.sentence_transformer_interface import (
+from db.utils.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
 

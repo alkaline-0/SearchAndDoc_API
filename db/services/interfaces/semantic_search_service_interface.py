@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class SolrSearchInterface(ABC):
+class SemanticSearchServiceInterface(ABC):
     """Interface for Solr connection and client creation."""
 
     @abstractmethod

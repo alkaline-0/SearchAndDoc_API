@@ -1,6 +1,6 @@
 import pytest
 
-from db.solr_utils.solr_exceptions import SolrValidationError
+from db.utils.exceptions import SolrValidationError
 from models.indexing_collection_model import IndexingCollectionModel
 from models.semantic_search_model import SemanticSearchModel
 from tests.db.mocks.mock_solr_config import MockSolrConfig

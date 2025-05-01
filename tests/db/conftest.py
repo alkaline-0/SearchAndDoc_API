@@ -4,8 +4,8 @@ import fixtup
 import pytest
 import ray
 
-from db.helpers.sentence_transformer_impl import STSentenceTransformer
-from db.solr_service_layers.solr_connection import SolrConnection
+from db.services.connection import ConnectionFactory
+from db.utils.sentence_transformer import STSentenceTransformer
 from models.solr_collection_model import SolrCollectionModel
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 
@@ -25,15 +25,15 @@ def retriever_model():
 
 
 @pytest.fixture(autouse=True)
-def solr_connection() -> Iterator[SolrConnection]:
+def solr_connection() -> Iterator[ConnectionFactory]:
     with fixtup.up("solr"):
-        solr_conn = SolrConnection(MockSolrConfig())
+        solr_conn = ConnectionFactory(MockSolrConfig())
         yield solr_conn
         solr_conn.get_admin_client().delete_all_collections()
 
 
 @pytest.fixture(autouse=True)
-def solr_collection_model() -> Iterator[SolrConnection]:
+def solr_collection_model() -> Iterator[ConnectionFactory]:
     solr_conn = SolrCollectionModel(MockSolrConfig())
     yield solr_conn
     solr_conn.delete_all_collections()

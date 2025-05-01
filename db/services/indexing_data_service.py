@@ -1,14 +1,16 @@
 import ray
 
-from db.helpers.encode import create_embeddings
-from db.helpers.interfaces.sentence_transformer_interface import (
+from db.services.interfaces.indexing_data_service_interface import (
+    IndexingDataServiceInterface,
+)
+from db.utils.encode import create_embeddings
+from db.utils.interfaces.pysolr_interface import SolrClientInterface
+from db.utils.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
-from db.solr_service_layers.interfaces.solr_index_interface import SolrIndexInerface
-from db.solr_utils.interfaces.pysolr_interface import SolrClientInterface
 
 
-class SolrIndexCollectionClient(SolrIndexInerface):
+class IndexingDataService(IndexingDataServiceInterface):
     def __init__(
         self,
         solr_client: SolrClientInterface,

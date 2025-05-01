@@ -1,7 +1,7 @@
 import numpy as np
 import ray
 
-from db.helpers.encode import create_embeddings
+from db.utils.encode import create_embeddings
 
 
 def test_normalize_create_embeddings_successfully(rerank_model):

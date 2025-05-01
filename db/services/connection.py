@@ -1,25 +1,23 @@
 import pysolr
 
-from db.helpers.interfaces.sentence_transformer_interface import (
+from db.config.solr_config import SolrConfig
+from db.services.admin import CollectionAdmin
+from db.services.indexing_data_service import IndexingDataService
+from db.services.interfaces.collection_admin_interface import CollectionAdminInterface
+from db.services.interfaces.connection_interface import ConnectionInterface
+from db.services.interfaces.indexing_data_service_interface import (
+    IndexingDataServiceInterface,
+)
+from db.services.interfaces.semantic_search_service_interface import (
+    SemanticSearchServiceInterface,
+)
+from db.services.semantic_search_service import SemanticSearchService
+from db.utils.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
-from db.solr_service_layers.interfaces.solr_admin_interface import SolrAdminInterface
-from db.solr_service_layers.interfaces.solr_connection_interface import (
-    SolrConnectionInterface,
-)
-from db.solr_service_layers.interfaces.solr_index_interface import SolrIndexInerface
-from db.solr_service_layers.interfaces.solr_search_interface import SolrSearchInterface
-from db.solr_service_layers.solr_admin import SolrAdminClient
-from db.solr_service_layers.solr_index_collection_client import (
-    SolrIndexCollectionClient,
-)
-from db.solr_service_layers.solr_search_collection_client import (
-    SolrSearchCollectionClient,
-)
-from db.solr_utils.solr_config import SolrConfig
 
 
-class SolrConnection(SolrConnectionInterface):
+class ConnectionFactory(ConnectionInterface):
     """Manages Solr connection and client creation."""
 
     def __init__(self, cfg: SolrConfig) -> None:
@@ -36,8 +34,8 @@ class SolrConnection(SolrConnectionInterface):
             )
         return self._pysolr_obj
 
-    def get_admin_client(self) -> SolrAdminInterface:
-        return SolrAdminClient(cfg=self.cfg)
+    def get_admin_client(self) -> CollectionAdminInterface:
+        return CollectionAdmin(cfg=self.cfg)
 
     def get_search_client(
         self,
@@ -45,10 +43,10 @@ class SolrConnection(SolrConnectionInterface):
         collection_url: str,
         rerank_model: SentenceTransformerInterface,
         retriever_model: SentenceTransformerInterface,
-    ) -> SolrSearchInterface:
+    ) -> SemanticSearchServiceInterface:
         """Get client for specific collection."""
 
-        return SolrSearchCollectionClient(
+        return SemanticSearchService(
             solr_client=self._get_connection_obj(collection_url=collection_url),
             retriever_model=retriever_model,
             rerank_model=rerank_model,
@@ -58,8 +56,8 @@ class SolrConnection(SolrConnectionInterface):
 
     def get_index_client(
         self, retriever_model: SentenceTransformerInterface, collection_url: str
-    ) -> SolrIndexInerface:
-        return SolrIndexCollectionClient(
+    ) -> IndexingDataServiceInterface:
+        return IndexingDataService(
             solr_client=self._get_connection_obj(collection_url=collection_url),
             retriever_model=retriever_model,
         )

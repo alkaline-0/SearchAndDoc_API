@@ -4,18 +4,20 @@ import ray
 from sentence_transformers import util
 from solrq import Value
 
-from db.helpers.encode import create_embeddings
-from db.helpers.interfaces.sentence_transformer_interface import (
+from db.config.solr_config import SolrConfig
+from db.services.interfaces.semantic_search_service_interface import (
+    SemanticSearchServiceInterface,
+)
+from db.utils.encode import create_embeddings
+from db.utils.exceptions import SolrError
+from db.utils.interfaces.pysolr_interface import SolrClientInterface
+from db.utils.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
-from db.helpers.solr_request import make_solr_request
-from db.solr_service_layers.interfaces.solr_search_interface import SolrSearchInterface
-from db.solr_utils.interfaces.pysolr_interface import SolrClientInterface
-from db.solr_utils.solr_config import SolrConfig
-from db.solr_utils.solr_exceptions import SolrError
+from db.utils.request import request
 
 
-class SolrSearchCollectionClient(SolrSearchInterface):
+class SemanticSearchService(SemanticSearchServiceInterface):
     def __init__(
         self,
         solr_client: SolrClientInterface,
@@ -168,7 +170,7 @@ class SolrSearchCollectionClient(SolrSearchInterface):
         )
 
     def _get_rows_count(self) -> int:
-        rows_count_resp = make_solr_request(
+        rows_count_resp = request(
             url=f"{self.cfg.BASE_URL}{self.collection_name}/select?indent=on&q=*:*&wt=json&rows=0",
             cfg=self.cfg,
             params={},

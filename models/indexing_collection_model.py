@@ -1,7 +1,7 @@
-from db.helpers.interfaces.sentence_transformer_interface import (
+from db.utils.exceptions import SolrValidationError
+from db.utils.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
-from db.solr_utils.solr_exceptions import SolrValidationError
 from models.base_model import BaseModel
 
 

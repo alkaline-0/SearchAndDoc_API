@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class SolrAdminInterface(ABC):
+class CollectionAdminInterface(ABC):
     """Interface for Solr connection and client creation."""
 
     @abstractmethod

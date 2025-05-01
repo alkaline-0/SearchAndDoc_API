@@ -6,11 +6,11 @@ import pysolr
 import requests
 from requests.auth import HTTPBasicAuth
 
-from db.solr_utils.solr_config import SolrConfig
-from db.solr_utils.solr_exceptions import SolrConnectionError, SolrError
+from db.config.solr_config import SolrConfig
+from db.utils.exceptions import SolrConnectionError, SolrError
 
 
-def make_solr_request(cfg: SolrConfig, params: dict[str, Any], url: str) -> dict:
+def request(cfg: SolrConfig, params: dict[str, Any], url: str) -> dict:
     """Makes HTTP request to Solr and handles response.
 
     Args:

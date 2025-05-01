@@ -1,5 +1,5 @@
-from db.solr_utils.solr_config import SolrConfig
-from db.solr_utils.solr_exceptions import SolrConnectionError, SolrValidationError
+from db.config.solr_config import SolrConfig
+from db.utils.exceptions import SolrConnectionError, SolrValidationError
 from models.base_model import BaseModel
 
 
