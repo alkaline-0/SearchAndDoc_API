@@ -10,7 +10,7 @@ services:
     - solr-data:/var/solr
     restart: always
     environment:
-    - ZK_HOST=zoo1:2181
+    - ZK_HOST=zoo1:2182
     depends_on:
     - zoo1
     tty: true

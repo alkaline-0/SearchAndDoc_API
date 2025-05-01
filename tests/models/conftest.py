@@ -25,15 +25,8 @@ def retriever_model():
 
 
 @pytest.fixture(autouse=True)
-def solr_connection() -> Iterator[SolrConnection]:
-    with fixtup.up("solr"):
-        solr_conn = SolrConnection(MockSolrConfig())
-        yield solr_conn
-        solr_conn.get_admin_client().delete_all_collections()
-
-
-@pytest.fixture(autouse=True)
 def solr_collection_model() -> Iterator[SolrConnection]:
-    solr_conn = SolrCollectionModel(MockSolrConfig())
-    yield solr_conn
-    solr_conn.delete_all_collections()
+    with fixtup.up("solr"):
+        solr_conn = SolrCollectionModel(MockSolrConfig())
+        yield solr_conn
+        solr_conn.delete_all_collections()
