@@ -1,6 +1,10 @@
 from groq import APIError, AsyncGroq
+
 from services.config.config import MachineLearningModelConfig
-from services.interfaces.machine_learning_model_interface import MachineLearningModelInterface
+from services.interfaces.machine_learning_model_interface import (
+    MachineLearningModelInterface,
+)
+
 
 class MachineLearningApiException(APIError):
     """Raised when validation fails."""
@@ -13,7 +17,7 @@ class AsyncGroqModel(MachineLearningModelInterface):
 
     async def create(self, messages):
         try:
-          chat_completion = await self._model.chat.completions.create(
+            chat_completion = await self._model.chat.completions.create(
                 messages=messages,
                 model=self._cfg.MODEL,
                 temperature=self._cfg.TEMPERATURE,
@@ -22,8 +26,6 @@ class AsyncGroqModel(MachineLearningModelInterface):
                 stop=self._cfg.STOP,
                 stream=self._cfg.STREAM,
             )
-          return chat_completion.choices[0].message.content
+            return chat_completion.choices[0].message.content
         except MachineLearningApiException as e:
             raise e
-          
-        

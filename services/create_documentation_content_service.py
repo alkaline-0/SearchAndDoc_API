@@ -44,7 +44,5 @@ class CreateDocumentationContentService(CreateDocumentationContentServiceInterfa
                 "content": f"""Given this document: {ai_result}, check that it covers all relevant details about {topic} as found in the provided {discord_messages} (a list of Discord messages). If you find any important information about {topic} in {discord_messages} that is not already in the document, update the technical document to include it. Make sure the final document is accurate and complete regarding {topic}. These versions are concise, clear, and provide explicit instructions for both content creation and validation, while ensuring technical traceability and relevance.""",
             },
         ]
-        
-        res = await self._ml_client.create(messages)
-        print(res, flush=True)
-        return res
+
+        return await self._ml_client.create(messages)
