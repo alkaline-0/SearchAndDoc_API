@@ -3,8 +3,12 @@ import pysolr
 from db.config.solr_config import SolrConfig
 from db.services.collection_admin_service import CollectionAdminService
 from db.services.index_data_service import IndexDataService
-from db.services.interfaces.collection_admin_service_interface import CollectionAdminServiceInterface
-from db.services.interfaces.connection_factory_service_interface import ConnectionFactoryServiceInterface
+from db.services.interfaces.collection_admin_service_interface import (
+    CollectionAdminServiceInterface,
+)
+from db.services.interfaces.connection_factory_service_interface import (
+    ConnectionFactoryServiceInterface,
+)
 from db.services.interfaces.index_data_service_interface import (
     IndexDataServiceInterface,
 )

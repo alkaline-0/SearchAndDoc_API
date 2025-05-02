@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 
-from db.services.interfaces.collection_admin_service_interface import CollectionAdminServiceInterface
+from db.services.interfaces.collection_admin_service_interface import (
+    CollectionAdminServiceInterface,
+)
 from db.services.interfaces.index_data_service_interface import (
     IndexDataServiceInterface,
 )
@@ -23,8 +25,7 @@ class ConnectionFactoryServiceInterface(ABC):
         rerank_model: SentenceTransformerInterface,
         retriever_model: SentenceTransformerInterface,
     ) -> SemanticSearchServiceInterface:
-       pass
-        
+        pass
 
     @abstractmethod
     def get_index_client(
