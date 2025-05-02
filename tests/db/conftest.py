@@ -4,9 +4,8 @@ import fixtup
 import pytest
 import ray
 
-from db.services.connection import ConnectionFactory
+from db.services.connection_factory_service import ConnectionFactoryService
 from db.utils.sentence_transformer import STSentenceTransformer
-from models.solr_collection_model import SolrCollectionModel
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 
 if not ray.is_initialized():
@@ -14,26 +13,19 @@ if not ray.is_initialized():
 
 
 @pytest.fixture
-def rerank_model():
+def rerank_model() -> STSentenceTransformer:
     # Initialize the model
     return STSentenceTransformer(MockSolrConfig().RERANK_MODEL_NAME, device="mps")
 
 
 @pytest.fixture()
-def retriever_model():
+def retriever_model() -> STSentenceTransformer:
     return STSentenceTransformer(MockSolrConfig().RETRIEVER_MODEL_NAME, device="mps")
 
 
 @pytest.fixture(autouse=True)
-def solr_connection() -> Iterator[ConnectionFactory]:
+def solr_connection() -> Iterator[ConnectionFactoryService]:
     with fixtup.up("solr"):
-        solr_conn = ConnectionFactory(MockSolrConfig())
+        solr_conn = ConnectionFactoryService(MockSolrConfig())
         yield solr_conn
         solr_conn.get_admin_client().delete_all_collections()
-
-
-@pytest.fixture(autouse=True)
-def solr_collection_model() -> Iterator[ConnectionFactory]:
-    solr_conn = SolrCollectionModel(MockSolrConfig())
-    yield solr_conn
-    solr_conn.delete_all_collections()

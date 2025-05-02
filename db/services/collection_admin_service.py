@@ -3,11 +3,11 @@ from urllib.parse import urljoin
 import requests
 
 from db.config.solr_config import SolrConfig
-from db.services.interfaces.collection_admin_interface import CollectionAdminInterface
+from db.services.interfaces.collection_admin_service_interface import CollectionAdminServiceInterface
 from db.utils.request import request
 
 
-class CollectionAdmin(CollectionAdminInterface):
+class CollectionAdminService(CollectionAdminServiceInterface):
     def __init__(self, cfg: SolrConfig) -> None:
         """Creates a new Solr Admin obj.
 

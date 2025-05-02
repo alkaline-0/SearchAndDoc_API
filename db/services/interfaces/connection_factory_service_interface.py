@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from db.services.interfaces.collection_admin_interface import CollectionAdminInterface
+from db.services.interfaces.collection_admin_service_interface import CollectionAdminServiceInterface
 from db.services.interfaces.index_data_service_interface import (
     IndexDataServiceInterface,
 )
@@ -12,7 +12,7 @@ from db.utils.interfaces.sentence_transformer_interface import (
 )
 
 
-class ConnectionInterface(ABC):
+class ConnectionFactoryServiceInterface(ABC):
     """Interface for Solr connection and client creation."""
 
     @abstractmethod
@@ -23,14 +23,15 @@ class ConnectionInterface(ABC):
         rerank_model: SentenceTransformerInterface,
         retriever_model: SentenceTransformerInterface,
     ) -> SemanticSearchServiceInterface:
-        """Get client for specific collection."""
+       pass
+        
 
     @abstractmethod
     def get_index_client(
         self, retriever_model: SentenceTransformerInterface, collection_url: str
     ) -> IndexDataServiceInterface:
-        """Get client for specific collection."""
+        pass
 
     @abstractmethod
-    def get_admin_client(self) -> CollectionAdminInterface:
-        """Get admin client"""
+    def get_admin_client(self) -> CollectionAdminServiceInterface:
+        pass

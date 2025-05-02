@@ -17,29 +17,28 @@ class CreateDocumentationContentService(CreateDocumentationContentServiceInterfa
         self, documents: list[str], server_id: str
     ) -> list[str]:
         records = json.dumps(documents, indent=2)
-        
-        try:
-          chat_completion = await self._groq_client.chat.completions.create(
-              messages=[
-                  {"role": "system", "content": self._groq_config.ROLE_CONTET},
-                  {
-                      "role": "user",
-                      "content": f"""Create a clear and well-structured document about the project mentioned in the chat messages by synthesizing and organizing the information from the message_content fields of Discord chat messages. Summarize and rephrase the technical discussions into coherent sections (such as Overview, Features, Implementation Details, Project process and Next Steps). Ensure the document is suitable for developers who may join the project in the future. Given a Discord server with the name {server_id} and the following records: {records}. For each point or section in the document, include a reference or link to the original Discord message using its message_id, channel_id, and server name. Where possible, format these references as Discord message links in the form: https://discord.com/channels/<server_id>/<channel_id>/<message_id>. Exclude any off-topic or non-technical messages, and ensure the document is suitable for developers joining the project.""",
-                  },
-              ],
-              model=self._groq_config.MODEL,
-              temperature=self._groq_config.TEMPERATURE,
-              max_completion_tokens=self._groq_config.MAX_COMPLETION_TOKEN,
-              top_p=self._groq_config.TOP_P,
-              stop=self._groq_config.STOP,
-              stream=False,
-          )
 
-          print(chat_completion.choices[0].message.content, flush=True)
-          return chat_completion.choices[0].message.content
+        try:
+            chat_completion = await self._groq_client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": self._groq_config.ROLE_CONTET},
+                    {
+                        "role": "user",
+                        "content": f"""Create a clear and well-structured document about the project mentioned in the chat messages by synthesizing and organizing the information from the message_content fields of Discord chat messages. Summarize and rephrase the technical discussions into coherent sections (such as Overview, Features, Implementation Details, Project process and Next Steps). Ensure the document is suitable for developers who may join the project in the future. Given a Discord server with the name {server_id} and the following records: {records}. For each point or section in the document, include a reference or link to the original Discord message using its message_id, channel_id, and server name. Where possible, format these references as Discord message links in the form: https://discord.com/channels/<server_id>/<channel_id>/<message_id>. Exclude any off-topic or non-technical messages, and ensure the document is suitable for developers joining the project.""",
+                    },
+                ],
+                model=self._groq_config.MODEL,
+                temperature=self._groq_config.TEMPERATURE,
+                max_completion_tokens=self._groq_config.MAX_COMPLETION_TOKEN,
+                top_p=self._groq_config.TOP_P,
+                stop=self._groq_config.STOP,
+                stream=False,
+            )
+
+            print(chat_completion.choices[0].message.content, flush=True)
+            return chat_completion.choices[0].message.content
         except APIError as e:
-          raise e
-        
+            raise e
 
     async def finalize_document(self, records: list[dict], topic: str) -> list[str]:
         server_documents = json.dumps(records, indent=2)

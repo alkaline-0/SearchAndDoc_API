@@ -2,7 +2,7 @@ import unittest
 
 import pytest
 
-from db.services.admin import CollectionAdmin
+from db.services.collection_admin_service import CollectionAdminService
 from db.utils.exceptions import SolrConnectionError
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 
@@ -12,12 +12,12 @@ class TestCollectionAdmin(unittest.TestCase):
     def setUp(self):
         # Create a mock SolrConfig object for testing
         self.mock_config = MockSolrConfig()
-        self.admin_client = CollectionAdmin(cfg=self.mock_config)
+        self.admin_client = CollectionAdminService(cfg=self.mock_config)
 
     def test_connectivity_issues(self):
         """Test connectivity issues with solr."""
         with pytest.raises(SolrConnectionError) as excinfo:
-            solr_admin_client = CollectionAdmin(
+            solr_admin_client = CollectionAdminService(
                 cfg=MockSolrConfig(
                     BASE_URL=f"http://invalid_url:{self.mock_config.SOLR_PORT}/solr/"
                 )
@@ -28,7 +28,7 @@ class TestCollectionAdmin(unittest.TestCase):
     def test_connectivity_issues_wrong_port(self):
         """Test connectivity issues with solr."""
         with pytest.raises(SolrConnectionError) as excinfo:
-            solr_admin_client = CollectionAdmin(
+            solr_admin_client = CollectionAdminService(
                 cfg=MockSolrConfig(
                     BASE_URL=f"http://{self.mock_config.SOLR_HOST}:0/solr/"
                 )

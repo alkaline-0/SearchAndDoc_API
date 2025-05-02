@@ -1,10 +1,10 @@
 import pysolr
 
 from db.config.solr_config import SolrConfig
-from db.services.admin import CollectionAdmin
+from db.services.collection_admin_service import CollectionAdminService
 from db.services.index_data_service import IndexDataService
-from db.services.interfaces.collection_admin_interface import CollectionAdminInterface
-from db.services.interfaces.connection_interface import ConnectionInterface
+from db.services.interfaces.collection_admin_service_interface import CollectionAdminServiceInterface
+from db.services.interfaces.connection_factory_service_interface import ConnectionFactoryServiceInterface
 from db.services.interfaces.index_data_service_interface import (
     IndexDataServiceInterface,
 )
@@ -17,7 +17,7 @@ from db.utils.interfaces.sentence_transformer_interface import (
 )
 
 
-class ConnectionFactory(ConnectionInterface):
+class ConnectionFactoryService(ConnectionFactoryServiceInterface):
     """Manages Solr connection and client creation."""
 
     def __init__(self, cfg: SolrConfig) -> None:
@@ -34,8 +34,8 @@ class ConnectionFactory(ConnectionInterface):
             )
         return self._pysolr_obj
 
-    def get_admin_client(self) -> CollectionAdminInterface:
-        return CollectionAdmin(cfg=self.cfg)
+    def get_admin_client(self) -> CollectionAdminServiceInterface:
+        return CollectionAdminService(cfg=self.cfg)
 
     def get_search_client(
         self,

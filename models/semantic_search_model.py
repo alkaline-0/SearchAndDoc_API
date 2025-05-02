@@ -1,29 +1,13 @@
-from db.config.solr_config import SolrConfig
-from db.utils.exceptions import SolrValidationError
-from db.utils.interfaces.sentence_transformer_interface import (
-    SentenceTransformerInterface,
+from db.services.interfaces.semantic_search_service_interface import (
+    SemanticSearchServiceInterface,
 )
-from models.base_model import BaseModel
+from db.utils.exceptions import SolrValidationError
 
 
-class SemanticSearchModel(BaseModel):
+class SemanticSearchModel:
 
-    def __init__(
-        self,
-        cfg: SolrConfig,
-        collection_name: str,
-        collection_url: str,
-        retriever_model: SentenceTransformerInterface,
-        rerank_model: SentenceTransformerInterface,
-    ):
-        _conn_obj = super().get_connection_object(cfg)
-
-        self._semantic_search_obj = _conn_obj.get_search_client(
-            collection_url=collection_url,
-            rerank_model=rerank_model,
-            retriever_model=retriever_model,
-            collection_name=collection_name,
-        )
+    def __init__(self, semantic_search_service_obj: SemanticSearchServiceInterface):
+        self._semantic_search_obj = semantic_search_service_obj
 
     def semantic_search(self, q: str, threshold: float = 0.1) -> list[dict]:
         self._query_valid(q=q)
