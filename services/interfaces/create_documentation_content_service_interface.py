@@ -8,6 +8,6 @@ class CreateDocumentationContentServiceInterface(ABC):
 
     @abstractmethod
     async def create_document_content_from_messages(
-        self, documents: list[str], server_id: str
-    ) -> list[str]:
+        self, documents: list[dict], server_id: str
+    ) -> str:
         pass
