@@ -9,12 +9,15 @@ class SemanticSearchModel:
     def __init__(self, semantic_search_service_obj: SemanticSearchServiceInterface):
         self._semantic_search_obj = semantic_search_service_obj
 
-    def semantic_search(self, q: str, threshold: float = 0.1) -> list[dict]:
+    def semantic_search(self, q: str, threshold: float = 0.0) -> list[dict]:
         self._query_valid(q=q)
 
         return self._semantic_search_obj.semantic_search(
             q=q.lower(), threshold=threshold
         )
+        
+    def get_rows_count(self):
+      return self._semantic_search_obj.get_rows_count()
 
     def _query_valid(self, q: str) -> bool:
         if len(q.strip()) < 4:
@@ -23,5 +26,3 @@ class SemanticSearchModel:
         if any(char.isdigit() for char in q):
             raise SolrValidationError("Search query must be only english letters")
 
-    def retrieve_all_docs(self) -> list:
-        return self._semantic_search_obj.retrieve_all_docs()

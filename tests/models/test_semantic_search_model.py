@@ -33,29 +33,6 @@ class TestSemanticSearchModel:
         assert res is not None
         assert len(res[0]["message_content"]) > 0
 
-    def test_retrieve_all_docs_successfully(
-        self, solr_conn_factory_obj, retriever_model, rerank_model
-    ):
-        collection_admin_obj = SolrCollectionModel(
-            collection_admin_service_obj=solr_conn_factory_obj.get_admin_client()
-        )
-        collection_url = collection_admin_obj.create_collection("test_collection")
-        indexing_model = IndexingCollectionModel(
-            indexing_service_obj=solr_conn_factory_obj.get_index_client(
-                retriever_model=retriever_model, collection_url=collection_url
-            )
-        ).index_data(documents=documents, soft_commit=True)
-
-        semantic_search_model = SemanticSearchModel(
-            semantic_search_service_obj=solr_conn_factory_obj.get_search_client(
-                collection_name="test_collection",
-                collection_url=collection_url,
-                rerank_model=rerank_model,
-                retriever_model=retriever_model,
-            )
-        )
-        res = semantic_search_model.retrieve_all_docs()
-        assert (len(res)) == len(documents)
 
     def test_unsuccesful_search_due_to_invalid_query(
         self, solr_conn_factory_obj, retriever_model, rerank_model

@@ -11,7 +11,3 @@ class SemanticSearchServiceInterface(ABC):
         threshold: float,
     ) -> list[dict]:
         pass
-
-    @abstractmethod
-    def retrieve_all_docs(self) -> list:
-        pass

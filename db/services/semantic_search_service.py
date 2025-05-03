@@ -48,7 +48,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
     def semantic_search(
         self,
         q: str,
-        threshold: float = 0.1,
+        threshold: float = 0.0,
     ) -> list[dict]:
         if self._is_malicious(q):
             raise SolrError("Cannot perform this query")
@@ -59,7 +59,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         )
 
         [docs] = self._retrieve_docs_with_knn(
-            embedding=ray.get(retriever_future), total_rows=self._get_rows_count()
+            embedding=ray.get(retriever_future), total_rows=self.get_rows_count()
         )
 
         candidate_texts = []
@@ -88,27 +88,11 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         return [
             item[0]
             for item in sorted_reranking_results
-            if round(item[1], 2) >= threshold
+            if item[1] >= threshold
         ]
 
     def _build_safe_query(self, raw_query) -> str:
         return str(Value(raw_query))
-
-    def retrieve_all_docs(self) -> list:
-        """Ray-optimized parallel fetching for large result sets"""
-        chunk_size = 5000
-        rows = []
-        total_rows = self._get_rows_count()
-        for start in range(0, total_rows, chunk_size):
-            actual_rows = min(chunk_size, total_rows - start)
-            batch_res = self._fetch_results_in_chunks(
-                q="*:*", start=start, rows_count=actual_rows
-            )
-
-            if len(batch_res) > 0:
-                rows.append(batch_res)
-        [response] = rows
-        return response
 
     def _is_malicious(self, query: str) -> bool:
         patterns = [
@@ -124,7 +108,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         """Ray-optimized parallel fetching for large result sets"""
         chunk_size = 5000
         futures = []
-        knn_q = "{!knn f=bert_vector topK=200}" + str([float(w) for w in embedding[0]])
+        knn_q = "{!knn f=bert_vector}" + str([float(w) for w in embedding[0]])
         for start in range(0, total_rows, chunk_size):
             actual_rows = min(chunk_size, total_rows - start)
             batch_res = self._fetch_results_in_chunks(
@@ -169,7 +153,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
             reverse=True,
         )
 
-    def _get_rows_count(self) -> int:
+    def get_rows_count(self) -> int:
         rows_count_resp = request(
             url=f"{self.cfg.BASE_URL}{self.collection_name}/select?indent=on&q=*:*&wt=json&rows=0",
             cfg=self.cfg,

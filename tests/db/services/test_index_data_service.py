@@ -21,10 +21,8 @@ class TestIndexDataService:
 
         index_client.index_data(documents, soft_commit=True)
 
-        res = search_client.retrieve_all_docs()
-
-        assert res is not None
-        assert len(res) == len(documents)
+        rows_count = search_client.get_rows_count()
+        assert rows_count == len(documents)
 
     def test_index_data_hard_commit_successfully(
         self, solr_connection, retriever_model, rerank_model
@@ -44,7 +42,5 @@ class TestIndexDataService:
 
         index_client.index_data(documents, soft_commit=False)
 
-        res = search_client.retrieve_all_docs()
-
-        assert res is not None
-        assert len(res) == len(documents)
+        rows_count = search_client.get_rows_count()
+        assert rows_count == len(documents)

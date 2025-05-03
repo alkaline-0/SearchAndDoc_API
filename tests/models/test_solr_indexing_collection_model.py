@@ -32,10 +32,8 @@ class TestSolrIndexingCollectionModel:
         )
         indexing_model.index_data(documents, soft_commit=True)
 
-        res = semantic_search_model.retrieve_all_docs()
-
-        assert res is not None
-        assert len(res) == len(documents)
+        rows_count = semantic_search_model.get_rows_count()
+        assert rows_count == len(documents)
 
     def test_index_data_hard_commit_successfully(
         self, solr_conn_factory_obj, retriever_model, rerank_model
@@ -60,10 +58,8 @@ class TestSolrIndexingCollectionModel:
         )
         indexing_model.index_data(documents, soft_commit=False)
 
-        res = semantic_search_model.retrieve_all_docs()
-
-        assert res is not None
-        assert len(res) == len(documents)
+        rows_count = semantic_search_model.get_rows_count()
+        assert rows_count == len(documents)
 
     def test_index_data_empty_data(self, solr_conn_factory_obj, retriever_model):
         with pytest.raises(SolrValidationError) as exec_info:
