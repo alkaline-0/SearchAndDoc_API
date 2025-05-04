@@ -10,7 +10,7 @@ services:
     - solr-data:/var/solr
     restart: always
     environment:
-    - ZK_HOST=zoo1:2182
+    - ZK_HOST=zoo1-test:2182
     depends_on:
     - zoo1
     tty: true
@@ -20,11 +20,11 @@ services:
     image: zookeeper:3.6.2
     container_name: zoo1-test
     restart: always
-    hostname: zoo1
+    hostname: zoo1-test
     ports:
     - 2182:2181
     environment:
       ZOO_MY_ID: 1
-      ZOO_SERVERS: server.1=0.0.0.0:2888:3888;2181
+      ZOO_SERVERS: server.1=zoo1-test:2888:3888;2182
 volumes:
   solr-data:

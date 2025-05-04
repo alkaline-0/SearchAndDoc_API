@@ -1,14 +1,12 @@
-from db.solr_utils.solr_config import SolrConfig
-from db.solr_utils.solr_exceptions import SolrConnectionError, SolrValidationError
-from models.base_model import BaseModel
+from db.services.interfaces.collection_admin_service_interface import (
+    CollectionAdminServiceInterface,
+)
+from db.utils.exceptions import SolrConnectionError, SolrValidationError
 
 
-class SolrCollectionModel(BaseModel):
-    def __init__(self, cfg: SolrConfig):
-        self._validate_credentials(cfg)
-        _conn_obj = super().get_connection_object(cfg)
-
-        self.solr_admin_obj = _conn_obj.get_admin_client()
+class SolrCollectionModel:
+    def __init__(self, collection_admin_service_obj: CollectionAdminServiceInterface):
+        self.solr_admin_obj = collection_admin_service_obj
 
     def create_collection(
         self, collection_name: str, num_shards: int = 10, replicas_count: int = 2
@@ -35,13 +33,3 @@ class SolrCollectionModel(BaseModel):
 
     def collection_exist(self, collection_name: str) -> bool:
         return self.solr_admin_obj.collection_exist(collection_name=collection_name)
-
-    def _validate_credentials(self, cfg) -> None:
-        """Handles None, empty strings, and whitespace."""
-        if cfg.USER_NAME is None or cfg.PASSWORD is None:
-            raise SolrValidationError("Username/password cannot be None")
-
-        if not cfg.USER_NAME.strip() or not cfg.PASSWORD.strip():
-            raise SolrValidationError(
-                "Username/password cannot be empty or whitespace-only"
-            )

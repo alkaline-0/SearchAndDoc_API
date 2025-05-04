@@ -1,36 +1,23 @@
-from db.helpers.interfaces.sentence_transformer_interface import (
-    SentenceTransformerInterface,
+from db.services.interfaces.semantic_search_service_interface import (
+    SemanticSearchServiceInterface,
 )
-from db.solr_utils.solr_config import SolrConfig
-from db.solr_utils.solr_exceptions import SolrValidationError
-from models.base_model import BaseModel
+from db.utils.exceptions import SolrValidationError
 
 
-class SemanticSearchModel(BaseModel):
+class SemanticSearchModel:
 
-    def __init__(
-        self,
-        cfg: SolrConfig,
-        collection_name: str,
-        collection_url: str,
-        retriever_model: SentenceTransformerInterface,
-        rerank_model: SentenceTransformerInterface,
-    ):
-        _conn_obj = super().get_connection_object(cfg)
+    def __init__(self, semantic_search_service_obj: SemanticSearchServiceInterface):
+        self._semantic_search_obj = semantic_search_service_obj
 
-        self._semantic_search_obj = _conn_obj.get_search_client(
-            collection_url=collection_url,
-            rerank_model=rerank_model,
-            retriever_model=retriever_model,
-            collection_name=collection_name,
-        )
-
-    def semantic_search(self, q: str, threshold: float = 0.1) -> list[dict]:
+    def semantic_search(self, q: str, threshold: float = 0.0) -> list[dict]:
         self._query_valid(q=q)
 
         return self._semantic_search_obj.semantic_search(
             q=q.lower(), threshold=threshold
         )
+
+    def get_rows_count(self):
+        return self._semantic_search_obj.get_rows_count()
 
     def _query_valid(self, q: str) -> bool:
         if len(q.strip()) < 4:
@@ -38,6 +25,3 @@ class SemanticSearchModel(BaseModel):
 
         if any(char.isdigit() for char in q):
             raise SolrValidationError("Search query must be only english letters")
-
-    def retrieve_all_docs(self) -> list:
-        return self._semantic_search_obj.retrieve_all_docs()
