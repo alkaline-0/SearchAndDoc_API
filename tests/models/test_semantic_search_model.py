@@ -33,7 +33,6 @@ class TestSemanticSearchModel:
         assert res is not None
         assert len(res[0]["message_content"]) > 0
 
-
     def test_unsuccesful_search_due_to_invalid_query(
         self, solr_conn_factory_obj, retriever_model, rerank_model
     ):

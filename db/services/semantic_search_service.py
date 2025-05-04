@@ -85,11 +85,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
             docs=docs,
         )
 
-        return [
-            item[0]
-            for item in sorted_reranking_results
-            if item[1] >= threshold
-        ]
+        return [item[0] for item in sorted_reranking_results if item[1] >= threshold]
 
     def _build_safe_query(self, raw_query) -> str:
         return str(Value(raw_query))

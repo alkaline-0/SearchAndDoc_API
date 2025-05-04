@@ -39,7 +39,7 @@ class TestCreateDocumentationContentService:
         search_result = search_client.semantic_search(
             "web development project", threshold=0.1
         )
-        
+
         groq_obj = AsyncGroqModel(MachineLearningModelConfig())
         service_obj = CreateDocumentationContentService(ml_client=groq_obj)
         result = await service_obj.create_document_content_from_messages(
