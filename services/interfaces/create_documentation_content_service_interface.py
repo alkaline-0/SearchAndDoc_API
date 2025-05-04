@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
+from logging import Logger
 
 
 class CreateDocumentationContentServiceInterface(ABC):
     @abstractmethod
-    def __init__() -> None:
+    def __init__(self, logger: Logger) -> None:
         pass
 
     @abstractmethod

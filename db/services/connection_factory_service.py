@@ -1,3 +1,5 @@
+from logging import Logger
+
 import pysolr
 
 from db.config.solr_config import SolrConfig
@@ -24,9 +26,10 @@ from db.utils.interfaces.sentence_transformer_interface import (
 class ConnectionFactoryService(ConnectionFactoryServiceInterface):
     """Manages Solr connection and client creation."""
 
-    def __init__(self, cfg: SolrConfig) -> None:
+    def __init__(self, cfg: SolrConfig, logger: Logger) -> None:
         self.cfg = cfg
         self._pysolr_obj = None
+        self._logger = logger
 
     def _get_connection_obj(self, collection_url: str) -> pysolr.Solr:
         if not self._pysolr_obj:
@@ -39,7 +42,7 @@ class ConnectionFactoryService(ConnectionFactoryServiceInterface):
         return self._pysolr_obj
 
     def get_admin_client(self) -> CollectionAdminServiceInterface:
-        return CollectionAdminService(cfg=self.cfg)
+        return CollectionAdminService(cfg=self.cfg, logger=self._logger)
 
     def get_search_client(
         self,
@@ -56,6 +59,7 @@ class ConnectionFactoryService(ConnectionFactoryServiceInterface):
             rerank_model=rerank_model,
             cfg=self.cfg,
             collection_name=collection_name,
+            logger=self._logger,
         )
 
     def get_index_client(
@@ -64,4 +68,5 @@ class ConnectionFactoryService(ConnectionFactoryServiceInterface):
         return IndexDataService(
             solr_client=self._get_connection_obj(collection_url=collection_url),
             retriever_model=retriever_model,
+            logger=self._logger,
         )

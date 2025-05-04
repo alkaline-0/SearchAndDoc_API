@@ -1,4 +1,5 @@
 import re
+from logging import Logger
 
 import ray
 from sentence_transformers import util
@@ -20,23 +21,26 @@ from db.utils.request import request
 class SemanticSearchService(SemanticSearchServiceInterface):
     def __init__(
         self,
+        logger: Logger,
         solr_client: SolrClientInterface,
         retriever_model: SentenceTransformerInterface,
         rerank_model: SentenceTransformerInterface,
         cfg: SolrConfig,
         collection_name: str,
     ) -> None:
-        """Creates a new Solr collection agent.
+        """Creates a new semantic search service object.
 
         Args:
             solr_client: SolrClientInterface object for Solr operations
             retriever_model: SentenceTransformerInterface for retrieval
             rerank_model: SentenceTransformerInterface for re-ranking
+            cfg: configurations for solr connection
+            collection_name: name of the collection to perform search on
 
         Returns: None
 
         Raises:
-            ValueErrorException: for any missing params
+            SolrError: for malicious queries
         """
 
         self.solr_client = solr_client
@@ -44,6 +48,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         self.retriever_model = retriever_model
         self.cfg = cfg
         self.collection_name = collection_name
+        self._logger = logger
 
     def semantic_search(
         self,
@@ -51,6 +56,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         threshold: float = 0.0,
     ) -> list[dict]:
         if self._is_malicious(q):
+            self._logger.error(f"Query contains invalid characters {q}")
             raise SolrError("Cannot perform this query")
 
         safe_q = self._build_safe_query(raw_query=q)
@@ -58,9 +64,13 @@ class SemanticSearchService(SemanticSearchServiceInterface):
             model=self.retriever_model, sentences=[safe_q], normalize_embeddings=False
         )
 
+        self._logger.info("Created the embeddings for the query.")
+
         [docs] = self._retrieve_docs_with_knn(
             embedding=ray.get(retriever_future), total_rows=self.get_rows_count()
         )
+
+        self._logger.info("Retrieved docs from solr successfully.")
 
         candidate_texts = []
         for item in docs:
@@ -84,6 +94,8 @@ class SemanticSearchService(SemanticSearchServiceInterface):
             candidate_embeddings=candidate_embeddings,
             docs=docs,
         )
+
+        self._logger.info("Reranked results from solr successfully.")
 
         return [item[0] for item in sorted_reranking_results if item[1] >= threshold]
 
@@ -117,14 +129,19 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         return futures
 
     def _fetch_results_in_chunks(self, start: int, q: str, rows_count: int) -> list:
-        params = {
-            "q": q,
-            "start": start,
-            "fl": "message_id, message_content, author_id, channel_id",
-            "rows": rows_count,
-            "sort": "score desc, message_id asc",
-        }
-        return self.solr_client.search(**params).docs
+        try:
+            params = {
+                "q": q,
+                "start": start,
+                "fl": "message_id, message_content, author_id, channel_id",
+                "rows": rows_count,
+                "sort": "score desc, message_id asc",
+            }
+            query_exec = self.solr_client.search(**params)
+            return query_exec.docs
+        except Exception as e:
+            self._logger.error(e, stack_info=True, exec_info=True)
+            raise e
 
     def _rerank_knn_results(
         self, query_embedding, candidate_embeddings, solr_response: dict
@@ -136,10 +153,8 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         Returns:
             List of tuples containing re-ranked results
         """
-        # Cosine similarity between query and each candidate
         scores = util.cos_sim(query_embedding, candidate_embeddings)[0].cpu().tolist()
 
-        # Zip together for sorting
         return sorted(
             zip(
                 solr_response,
@@ -150,12 +165,17 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         )
 
     def get_rows_count(self) -> int:
-        rows_count_resp = request(
-            url=f"{self.cfg.BASE_URL}{self.collection_name}/select?indent=on&q=*:*&wt=json&rows=0",
-            cfg=self.cfg,
-            params={},
-        )
-        return rows_count_resp["response"]["numFound"]
+        try:
+            rows_count_resp = request(
+                url=f"{self.cfg.BASE_URL}{self.collection_name}/select?indent=on&q=*:*&wt=json&rows=0",
+                cfg=self.cfg,
+                params={},
+                logger=self._logger,
+            )
+            return rows_count_resp["response"]["numFound"]
+        except Exception as e:
+            self._logger.error(e, stack_info=True, exec_info=True)
+            raise e
 
     def _process_reranked_results(
         self, query_embedding, candidate_embeddings, docs

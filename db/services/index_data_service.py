@@ -1,3 +1,5 @@
+from logging import Logger
+
 import ray
 
 from db.services.interfaces.index_data_service_interface import (
@@ -13,15 +15,15 @@ from db.utils.interfaces.sentence_transformer_interface import (
 class IndexDataService(IndexDataServiceInterface):
     def __init__(
         self,
+        logger: Logger,
         solr_client: SolrClientInterface,
         retriever_model: SentenceTransformerInterface,
     ) -> None:
-        """Creates a new Solr collection agent.
+        """Creates a new indexing data collection agent.
 
         Args:
             solr_client: SolrClientInterface object for Solr operations
             retriever_model: SentenceTransformerInterface for retrieval
-            rerank_model: SentenceTransformerInterface for re-ranking
 
         Returns: None
         """
@@ -30,14 +32,13 @@ class IndexDataService(IndexDataServiceInterface):
         self.retriever_model = retriever_model
         self.batch_size = 5000
         self.workers = 4
+        self._logger = logger
 
     def index_data(self, data: list[dict], soft_commit: bool) -> None:
-        # Split data into batches upfront
         data_batches = [
             data[i : i + self.batch_size] for i in range(0, len(data), self.batch_size)
         ]
 
-        # Parallel embedding generation
         embedding_futures = [
             create_embeddings.remote(
                 [item["message_content"] for item in batch],
@@ -47,14 +48,15 @@ class IndexDataService(IndexDataServiceInterface):
             for batch in data_batches
         ]
 
-        # Process embeddings as they complete
         ready, not_ready = ray.wait(embedding_futures, num_returns=1)
         while ready:
             for future in ready:
                 batch_idx = embedding_futures.index(future)
+                self._logger.info(f"starting processing batch {batch_idx}.")
                 self._add_bert_vector_to_data(
                     data_batches[batch_idx], ray.get(future), soft_commit=soft_commit
                 )
+                self._logger.info(f"Indexed batch {batch_idx}.")
             ready, not_ready = ray.wait(not_ready, num_returns=1)
 
     def _add_bert_vector_to_data(

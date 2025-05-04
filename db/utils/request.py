@@ -1,5 +1,5 @@
-import inspect
 import json
+from logging import Logger
 from typing import Any
 
 import pysolr
@@ -10,7 +10,7 @@ from db.config.solr_config import SolrConfig
 from db.utils.exceptions import SolrConnectionError, SolrError
 
 
-def request(cfg: SolrConfig, params: dict[str, Any], url: str) -> dict:
+def request(cfg: SolrConfig, params: dict[str, Any], url: str, logger: Logger) -> dict:
     """Makes HTTP request to Solr and handles response.
 
     Args:
@@ -36,9 +36,8 @@ def request(cfg: SolrConfig, params: dict[str, Any], url: str) -> dict:
         return json.loads(pysolr.force_unicode(response.content))
 
     except requests.exceptions.RequestException as error:
-        caller_frame = inspect.getouterframes(inspect.currentframe(), 2)
-        print(f"Solr request failed originating from {caller_frame[1][3]}: {error}")
+        logger.error(error, stack_info=True, exec_info=True)
         raise SolrConnectionError(error)
     except Exception as error:
-        print(f"Unexpected error occurred: {error}")
+        logger.error(error, stack_info=True, exec_info=True)
         raise SolrError(error)

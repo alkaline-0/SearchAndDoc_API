@@ -1,4 +1,5 @@
 import json
+from logging import Logger
 
 from services.interfaces.create_documentation_content_service_interface import (
     CreateDocumentationContentServiceInterface,
@@ -9,8 +10,11 @@ from services.interfaces.machine_learning_model_interface import (
 
 
 class CreateDocumentationContentService(CreateDocumentationContentServiceInterface):
-    def __init__(self, ml_client: MachineLearningModelInterface) -> None:
+    def __init__(
+        self, ml_client: MachineLearningModelInterface, logger: Logger
+    ) -> None:
         self._ml_client = ml_client
+        self._logger = logger
 
     async def create_document_content_from_messages(
         self, documents: list[str], server_id: str
@@ -29,4 +33,4 @@ class CreateDocumentationContentService(CreateDocumentationContentServiceInterfa
             },
         ]
 
-        return await self._ml_client.create(messages)
+        return await self._ml_client.create(messages, self._logger)

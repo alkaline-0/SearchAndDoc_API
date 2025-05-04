@@ -10,6 +10,7 @@ from db.services.interfaces.connection_factory_service_interface import (
 )
 from db.utils.sentence_transformer import STSentenceTransformer
 from tests.db.mocks.mock_solr_config import MockSolrConfig
+from utils.get_logger import get_logger
 
 if not ray.is_initialized():
     ray.init()
@@ -29,6 +30,6 @@ def retriever_model():
 @pytest.fixture(autouse=True)
 def solr_conn_factory_obj() -> Iterator[ConnectionFactoryServiceInterface]:
     with fixtup.up("solr"):
-        solr_conn = ConnectionFactoryService(MockSolrConfig())
+        solr_conn = ConnectionFactoryService(MockSolrConfig(), logger=get_logger())
         yield solr_conn
         solr_conn.get_admin_client().delete_all_collections()
