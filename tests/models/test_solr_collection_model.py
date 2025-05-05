@@ -14,12 +14,12 @@ class TestSolrCollectionModel:
     def test_invalid_shard_rejection(self, solr_conn_factory_obj):
         with pytest.raises(SolrValidationError) as excinfo:
             solr_collection_model = SolrCollectionModel(
+                collection_name="test_invalid_shards",
                 logger=self.logger,
                 collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
             )
             with patch.object(solr_collection_model, "_logger") as mock_logger:
                 solr_collection_model.create_collection(
-                    collection_name="test_invalid_shards",
                     num_shards=-1,
                     replicas_count=3,
                 )
@@ -31,12 +31,12 @@ class TestSolrCollectionModel:
     def test_invalid_replica_rejection(self, solr_conn_factory_obj):
         with pytest.raises(SolrValidationError) as excinfo:
             solr_collection_model = SolrCollectionModel(
+                collection_name="test_invalid_replica",
                 logger=self.logger,
                 collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
             )
             with patch.object(solr_collection_model, "_logger") as mock_logger:
                 solr_collection_model.create_collection(
-                    collection_name="test_invalid_replica",
                     num_shards=2,
                     replicas_count=-1,
                 )
@@ -49,13 +49,12 @@ class TestSolrCollectionModel:
         """Test unsuccessful collection creation due to empty name."""
         with pytest.raises(SolrValidationError) as excinfo:
             solr_collection_model = SolrCollectionModel(
+                collection_name="",
                 logger=self.logger,
                 collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
             )
             with patch.object(solr_collection_model, "_logger") as mock_logger:
-                solr_collection_model.create_collection(
-                    collection_name="", num_shards=2, replicas_count=2
-                )
+                solr_collection_model.create_collection(num_shards=2, replicas_count=2)
             mock_logger.error.assert_has_calls([call(excinfo.value)])
         assert "Collection name cannot be empty" in str(excinfo.value)
 
@@ -65,15 +64,13 @@ class TestSolrCollectionModel:
         """Test unsuccessful collection creation due to already existing collection."""
         with pytest.raises(SolrConnectionError) as excinfo:
             solr_collection_model = SolrCollectionModel(
+                collection_name="test_invalid_shards",
                 logger=self.logger,
                 collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
             )
-            collection_name = "test_collection"
-            solr_collection_model.create_collection(
-                collection_name=collection_name, num_shards=1, replicas_count=1
-            )
+            solr_collection_model.create_collection(num_shards=1, replicas_count=1)
             with patch.object(solr_collection_model, "_logger") as mock_logger:
-                solr_collection_model.create_collection(collection_name=collection_name)
+                solr_collection_model.create_collection()
             mock_logger.error.assert_has_calls([call(excinfo.value)])
         assert "Cannot create a collection with the same name as existing one" in str(
             excinfo.value
@@ -81,33 +78,33 @@ class TestSolrCollectionModel:
 
     def test_successful_collection_creation(self, solr_conn_factory_obj):
         """Test successful collection creation."""
+        collection_name = "test_collection"
         solr_collection_model = SolrCollectionModel(
+            collection_name=collection_name,
             logger=self.logger,
             collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
         )
-        collection_name = "test_collection"
         collection_url = solr_collection_model.create_collection(
-            collection_name=collection_name, replicas_count=1, num_shards=1
+            replicas_count=1, num_shards=1
         )
         assert (
             collection_url
             == f"http://{MockSolrConfig().SOLR_HOST}:{MockSolrConfig().SOLR_PORT}/solr/{collection_name}"
         )
-        assert solr_collection_model.collection_exist(collection_name) is True
+        assert solr_collection_model.collection_exist() is True
 
     def test_successful_collection_deletion(self, solr_conn_factory_obj):
         """Test successful collection creation."""
+        collection_name = "test_collection"
         solr_collection_model = SolrCollectionModel(
+            collection_name=collection_name,
             logger=self.logger,
             collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
         )
-        collection_name = "test_collection"
-        solr_collection_model.create_collection(
-            collection_name=collection_name, replicas_count=1, num_shards=1
-        )
+        solr_collection_model.create_collection(replicas_count=1, num_shards=1)
 
         solr_collection_model.delete_all_collections()
-        assert solr_collection_model.collection_exist(collection_name) is False
+        assert solr_collection_model.collection_exist() is False
 
     def test_collection_exist_returns_true_for_existent_collection(
         self, solr_conn_factory_obj
@@ -115,21 +112,23 @@ class TestSolrCollectionModel:
         """Test successful collection existence check."""
         collection_name = "test_collection"
         solr_collection_model = SolrCollectionModel(
+            collection_name=collection_name,
             logger=self.logger,
             collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
         )
-        solr_collection_model.create_collection(collection_name=collection_name)
-        res = solr_collection_model.collection_exist(collection_name)
+        solr_collection_model.create_collection()
+        res = solr_collection_model.collection_exist()
         assert res is True
 
     def test_collection_exist_returns_false_for_none_existent_collection(
         self, solr_conn_factory_obj
     ):
         """Test unsuccessful collection existence check."""
+        collection_name = "non_existent_collection"
         solr_collection_model = SolrCollectionModel(
+            collection_name=collection_name,
             logger=self.logger,
             collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
         )
-        collection_name = "non_existent_collection"
-        res = solr_collection_model.collection_exist(collection_name)
+        res = solr_collection_model.collection_exist()
         assert res is False

@@ -4,7 +4,7 @@ from logging import Logger
 from services.interfaces.create_documentation_content_service_interface import (
     CreateDocumentationContentServiceInterface,
 )
-from services.interfaces.machine_learning_model_interface import (
+from utils.interfaces.machine_learning_model_interface import (
     MachineLearningModelInterface,
 )
 

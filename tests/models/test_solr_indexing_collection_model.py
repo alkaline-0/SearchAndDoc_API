@@ -16,11 +16,13 @@ class TestSolrIndexingCollectionModel:
     def test_index_data_soft_commit_successfully(
         self, solr_conn_factory_obj, retriever_model, rerank_model
     ):
+        collection_name = "test_collection"
         collection_admin_obj = SolrCollectionModel(
+            collection_name=collection_name,
             logger=self.logger,
             collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
         )
-        collection_url = collection_admin_obj.create_collection("test_collection")
+        collection_url = collection_admin_obj.create_collection()
         indexing_model = IndexingCollectionModel(
             logger=self.logger,
             indexing_service_obj=solr_conn_factory_obj.get_index_client(
@@ -31,7 +33,7 @@ class TestSolrIndexingCollectionModel:
         semantic_search_model = SemanticSearchModel(
             logger=self.logger,
             semantic_search_service_obj=solr_conn_factory_obj.get_search_client(
-                collection_name="test_collection",
+                collection_name=collection_name,
                 collection_url=collection_url,
                 rerank_model=rerank_model,
                 retriever_model=retriever_model,
@@ -45,11 +47,13 @@ class TestSolrIndexingCollectionModel:
     def test_index_data_hard_commit_successfully(
         self, solr_conn_factory_obj, retriever_model, rerank_model
     ):
+        collection_name = "test_collection"
         collection_admin_obj = SolrCollectionModel(
+            collection_name=collection_name,
             logger=self.logger,
             collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
         )
-        collection_url = collection_admin_obj.create_collection("test_collection")
+        collection_url = collection_admin_obj.create_collection()
         indexing_model = IndexingCollectionModel(
             logger=self.logger,
             indexing_service_obj=solr_conn_factory_obj.get_index_client(
@@ -60,7 +64,7 @@ class TestSolrIndexingCollectionModel:
         semantic_search_model = SemanticSearchModel(
             logger=self.logger,
             semantic_search_service_obj=solr_conn_factory_obj.get_search_client(
-                collection_name="test_collection",
+                collection_name=collection_name,
                 collection_url=collection_url,
                 rerank_model=rerank_model,
                 retriever_model=retriever_model,
@@ -73,11 +77,14 @@ class TestSolrIndexingCollectionModel:
 
     def test_index_data_empty_data(self, solr_conn_factory_obj, retriever_model):
         with pytest.raises(SolrValidationError) as exec_info:
+
+            collection_name = "test_collection"
             collection_admin_obj = SolrCollectionModel(
+                collection_name=collection_name,
                 logger=self.logger,
                 collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
             )
-            collection_url = collection_admin_obj.create_collection("test_collection")
+            collection_url = collection_admin_obj.create_collection()
             indexing_model = IndexingCollectionModel(
                 logger=self.logger,
                 indexing_service_obj=solr_conn_factory_obj.get_index_client(

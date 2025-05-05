@@ -1,3 +1,4 @@
+import datetime
 import re
 from logging import Logger
 
@@ -54,6 +55,8 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         self,
         q: str,
         threshold: float = 0.0,
+        start_date: datetime.datetime = None,
+        end_date: datetime.datetime = None,
     ) -> list[dict]:
         if self._is_malicious(q):
             self._logger.error(f"Query contains invalid characters {q}")
@@ -67,7 +70,10 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         self._logger.info("Created the embeddings for the query.")
 
         [docs] = self._retrieve_docs_with_knn(
-            embedding=ray.get(retriever_future), total_rows=self.get_rows_count()
+            embedding=ray.get(retriever_future),
+            total_rows=self.get_rows_count(),
+            start_date=start_date,
+            end_date=end_date,
         )
 
         self._logger.info("Retrieved docs from solr successfully.")
@@ -112,15 +118,21 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         ]
         return any(re.search(pattern, query, re.IGNORECASE) for pattern in patterns)
 
-    def _retrieve_docs_with_knn(self, embedding: list, total_rows: int) -> list:
+    def _retrieve_docs_with_knn(
+        self, embedding: list, total_rows: int, start_date: datetime, end_date: datetime
+    ) -> list:
         """Ray-optimized parallel fetching for large result sets"""
         chunk_size = 5000
         futures = []
         knn_q = "{!knn f=bert_vector}" + str([float(w) for w in embedding[0]])
         for start in range(0, total_rows, chunk_size):
             actual_rows = min(chunk_size, total_rows - start)
-            batch_res = self._fetch_results_in_chunks(
-                q=knn_q, start=start, rows_count=actual_rows
+            batch_res = self._fetch_results_in_chunks_with_date(
+                q=knn_q,
+                start=start,
+                rows_count=actual_rows,
+                start_date=start_date,
+                end_date=end_date,
             )
 
             if len(batch_res) > 0:
@@ -128,20 +140,53 @@ class SemanticSearchService(SemanticSearchServiceInterface):
 
         return futures
 
-    def _fetch_results_in_chunks(self, start: int, q: str, rows_count: int) -> list:
+    def _fetch_results_in_chunks_with_date(
+        self,
+        start: int,
+        q: str,
+        rows_count: int,
+        start_date: datetime.datetime = None,
+        end_date: datetime.datetime = None,
+    ) -> list:
+        """Fetch search results in paginated chunks with date filtering."""
         try:
+            solr_date_format = "%Y-%m-%dT%H:%M:%SZ"
+            date_filter = []
+
+            if not start_date and not end_date:
+                return self._fetch_results_in_chunks(
+                    start=start, q=q, rows_count=rows_count
+                )
+
+            if start_date:
+                date_filter.append(
+                    f"created_at:[{start_date.strftime(solr_date_format)} TO *]"
+                )
+            if end_date:
+                date_filter.append(
+                    f"created_at:[* TO {end_date.strftime(solr_date_format)}]"
+                )
+
             params = {
                 "q": q,
                 "start": start,
-                "fl": "message_id, message_content, author_id, channel_id",
+                "fl": "message_id, message_content, author_id, channel_id, created_at",
                 "rows": rows_count,
                 "sort": "score desc, message_id asc",
+                "fq": date_filter if date_filter else None,
             }
+
+            params = {k: v for k, v in params.items() if v is not None}
+
             query_exec = self.solr_client.search(**params)
             return query_exec.docs
         except Exception as e:
-            self._logger.error(e, stack_info=True, exec_info=True)
-            raise e
+            self._logger.error(
+                f"Failed to fetch chunk {start}-{start+rows_count}: {str(e)}",
+                exc_info=True,
+                stack_info=True,
+            )
+            raise
 
     def _rerank_knn_results(
         self, query_embedding, candidate_embeddings, solr_response: dict
@@ -191,3 +236,18 @@ class SemanticSearchService(SemanticSearchServiceInterface):
             key=lambda x: x[1],
             reverse=True,
         )
+
+    def _fetch_results_in_chunks(self, start: int, q: str, rows_count: int) -> list:
+        try:
+            params = {
+                "q": q,
+                "start": start,
+                "fl": "message_id, message_content, author_id, channel_id",
+                "rows": rows_count,
+                "sort": "score desc, message_id asc",
+            }
+            query_exec = self.solr_client.search(**params)
+            return query_exec.docs
+        except Exception as e:
+            self._logger.error(e, stack_info=True, exec_info=True)
+            raise e
