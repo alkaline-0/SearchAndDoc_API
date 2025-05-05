@@ -1,8 +1,13 @@
 from abc import ABC, abstractmethod
+from logging import Logger
 
 
 class SemanticSearchServiceInterface(ABC):
     """Interface for Solr connection and client creation."""
+
+    @abstractmethod
+    def __init__(self, logger: Logger = None):
+        pass
 
     @abstractmethod
     def semantic_search(

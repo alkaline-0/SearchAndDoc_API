@@ -1,4 +1,6 @@
-from groq import APIError, AsyncGroq
+from logging import Logger
+
+from groq import AsyncGroq
 
 from services.config.config import MachineLearningModelConfig
 from services.interfaces.machine_learning_model_interface import (
@@ -6,16 +8,12 @@ from services.interfaces.machine_learning_model_interface import (
 )
 
 
-class MachineLearningApiException(APIError):
-    """Raised when validation fails."""
-
-
 class AsyncGroqModel(MachineLearningModelInterface):
     def __init__(self, cfg: MachineLearningModelConfig) -> None:
         self._model = AsyncGroq(api_key=cfg.API_TOKEN)
         self._cfg = cfg
 
-    async def create(self, messages):
+    async def create(self, messages, logger: Logger):
         try:
             chat_completion = await self._model.chat.completions.create(
                 messages=messages,
@@ -26,6 +24,8 @@ class AsyncGroqModel(MachineLearningModelInterface):
                 stop=self._cfg.STOP,
                 stream=self._cfg.STREAM,
             )
+            logger.info("Created README successfully.")
             return chat_completion.choices[0].message.content
-        except MachineLearningApiException as e:
+        except Exception as e:
+            logger.error(e, exc_info=True, stack_info=True)
             raise e

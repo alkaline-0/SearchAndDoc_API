@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from logging import Logger
 
 from db.services.interfaces.collection_admin_service_interface import (
     CollectionAdminServiceInterface,
@@ -16,6 +17,10 @@ from db.utils.interfaces.sentence_transformer_interface import (
 
 class ConnectionFactoryServiceInterface(ABC):
     """Interface for Solr connection and client creation."""
+
+    @abstractmethod
+    def __init__(self, logger: Logger):
+        pass
 
     @abstractmethod
     def get_search_client(
