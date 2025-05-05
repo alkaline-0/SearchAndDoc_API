@@ -35,7 +35,7 @@ The repo uses a **Monolothic** server architecture
 The system follows an **MVC-inspired** software architecture, structured for APIs (no front-end views)
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffd8b1', 'edgeLabelBackground':'#fff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffd8b1', 'edgeLabelBackground':'#fff', 'fontSize': '200px', 'width': 100%, 'height': 100%}}}%%
 classDiagram
     direction TB
 
