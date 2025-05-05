@@ -1,3 +1,4 @@
+import datetime
 from abc import ABC, abstractmethod
 from logging import Logger
 
@@ -14,5 +15,7 @@ class SemanticSearchServiceInterface(ABC):
         self,
         q: str,
         threshold: float,
+        start_date: datetime = None,
+        end_date: datetime = None,
     ) -> list[dict]:
         pass

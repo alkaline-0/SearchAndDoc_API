@@ -22,3 +22,7 @@ class CollectionAdminServiceInterface(ABC):
     @abstractmethod
     def collection_exist(self, collection_name: str) -> bool:
         pass
+
+    @abstractmethod
+    def get_collection_url(self, collection_name: str) -> str:
+        pass

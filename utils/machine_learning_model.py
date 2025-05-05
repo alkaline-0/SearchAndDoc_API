@@ -3,7 +3,7 @@ from logging import Logger
 from groq import AsyncGroq
 
 from services.config.config import MachineLearningModelConfig
-from services.interfaces.machine_learning_model_interface import (
+from utils.interfaces.machine_learning_model_interface import (
     MachineLearningModelInterface,
 )
 

@@ -17,10 +17,11 @@ class TestSemanticSearchModel:
         self, solr_conn_factory_obj, retriever_model, rerank_model
     ):
         collection_admin_obj = SolrCollectionModel(
+            collection_name="test_collection",
             logger=self.logger,
             collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
         )
-        collection_url = collection_admin_obj.create_collection("test_collection")
+        collection_url = collection_admin_obj.create_collection()
         IndexingCollectionModel(
             logger=self.logger,
             indexing_service_obj=solr_conn_factory_obj.get_index_client(
@@ -47,10 +48,11 @@ class TestSemanticSearchModel:
     ):
         with pytest.raises(SolrValidationError) as excinfo:
             collection_admin_obj = SolrCollectionModel(
+                collection_name="test_collection",
                 logger=self.logger,
                 collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
             )
-            collection_url = collection_admin_obj.create_collection("test_collection")
+            collection_url = collection_admin_obj.create_collection()
             IndexingCollectionModel(
                 logger=self.logger,
                 indexing_service_obj=solr_conn_factory_obj.get_index_client(
@@ -78,11 +80,12 @@ class TestSemanticSearchModel:
         """Test unsuccessful collection existence check due to wrong password."""
         with pytest.raises(SolrValidationError) as excinfo:
             collection_admin_obj = SolrCollectionModel(
+                collection_name="test_collection",
                 logger=self.logger,
                 collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
             )
-            collection_url = collection_admin_obj.create_collection("test_collection")
-            indexing_model = IndexingCollectionModel(
+            collection_url = collection_admin_obj.create_collection()
+            IndexingCollectionModel(
                 logger=self.logger,
                 indexing_service_obj=solr_conn_factory_obj.get_index_client(
                     retriever_model=retriever_model, collection_url=collection_url
@@ -110,10 +113,11 @@ class TestSemanticSearchModel:
     ):
         with pytest.raises(SolrValidationError) as exec_info:
             collection_admin_obj = SolrCollectionModel(
+                collection_name="test_collection",
                 logger=self.logger,
                 collection_admin_service_obj=solr_conn_factory_obj.get_admin_client(),
             )
-            collection_url = collection_admin_obj.create_collection("test_collection")
+            collection_url = collection_admin_obj.create_collection()
             IndexingCollectionModel(
                 logger=self.logger,
                 indexing_service_obj=solr_conn_factory_obj.get_index_client(

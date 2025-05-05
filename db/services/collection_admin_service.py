@@ -107,3 +107,6 @@ class CollectionAdminService(CollectionAdminServiceInterface):
             params=params, url=self._admin_url, cfg=self.cfg, logger=self._logger
         )
         return collection_name in res["collections"]
+
+    def get_collection_url(self, collection_name: str):
+        return urljoin(self.cfg.BASE_URL, collection_name)

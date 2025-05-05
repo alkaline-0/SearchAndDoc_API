@@ -1,3 +1,4 @@
+import datetime
 from logging import Logger
 
 from db.services.interfaces.semantic_search_service_interface import (
@@ -16,11 +17,17 @@ class SemanticSearchModel:
         self._semantic_search_obj = semantic_search_service_obj
         self._logger = logger
 
-    def semantic_search(self, q: str, threshold: float = 0.0) -> list[dict]:
+    def semantic_search(
+        self,
+        q: str,
+        threshold: float = 0.0,
+        start_date: datetime = None,
+        end_date: datetime = None,
+    ) -> list[dict]:
         self._query_valid(q=q)
 
         return self._semantic_search_obj.semantic_search(
-            q=q.lower(), threshold=threshold
+            q=q.lower(), threshold=threshold, start_date=start_date, end_date=end_date
         )
 
     def get_rows_count(self):
