@@ -170,27 +170,27 @@ classDiagram
 ```
 
 
-- **Routers**:  
+- **Routers**:
   - Receive and validate HTTP requests.
   - Delegate processing to the appropriate service layer.
   - Located in the `routers/` directory.
 
-- **Models**:  
+- **Models**:
   - Define Pydantic schemas for request/response validation.
   - Provide data models for interacting with service layers and the database.
   - Located in the `models/` directory.
 
-- **Service Layers**:  
+- **Service Layers**:
   - Contain business logic for search, indexing, and documentation generation.
   - Orchestrate communication between models, database, and LLMs.
   - Located in the `services/` directory.
 
-- **Factory Functions**:  
+- **Factory Functions**:
   - Manage creation and configuration of database connections and clients.
   - Ensure efficient and reusable connection handling.
   - Located in the `services/` and `utils/` directories.
 
-- **Database (Solr)**:  
+- **Database (Solr)**:
   - Stores and indexes Discord messages and metadata.
   - Supports advanced search queries and retrieval.
 
@@ -207,23 +207,23 @@ classDiagram
 
 ## Setup
 
-1. **Install Python 3.9.20 with pyenv**  
+1. **Install Python 3.9.20 with pyenv**
 ```shell
 CONFIGURE_OPTS="--with-openssl=/opt/Homebrew/Cellar/openssl@3/3.4.1" pyenv install -v 3.9.20
 ```
 
-2. **Set Local Python Version** 
+2. **Set Local Python Version**
 ```shell
 pyenv local 3.9.20
 ```
 
-3. **Create and Activate a Virtual Environment**  
+3. **Create and Activate a Virtual Environment**
 ```shell
 pyenv virtualenv 3.9.20 <virtual_env_name>
 pyenv activate <virtual_env_name>
 ```
 
-4. **Install Project Dependencies**  
+4. **Install Project Dependencies**
 ```shell
 pip install uv
 uv sync
@@ -272,5 +272,3 @@ uvicorn main:app --reload
 ├── tests/ # Automated tests
 ├── pyproject.toml # Project metadata and dependencies
 └── README.md
-
-
