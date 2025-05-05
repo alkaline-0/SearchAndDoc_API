@@ -33,4 +33,4 @@ class CreateDocumentationContentService(CreateDocumentationContentServiceInterfa
             },
         ]
 
-        return await self._ml_client.create(messages, self._logger)
+        return await self._ml_client.create(messages=messages, logger=self._logger)

@@ -1,4 +1,4 @@
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -30,13 +30,13 @@ class TestCreateDocumentationContentService:
             collection_name="test"
         )
         index_client = IndexingCollectionModel(
-            self.logger,
+            logger=self.logger,
             indexing_service_obj=solr_connection.get_index_client(
                 retriever_model=retriever_model, collection_url=collection_url
             ),
         )
         search_client = SemanticSearchModel(
-            self.logger,
+            logger=self.logger,
             semantic_search_service_obj=solr_connection.get_search_client(
                 collection_name="test",
                 retriever_model=retriever_model,
@@ -50,7 +50,7 @@ class TestCreateDocumentationContentService:
             "web development project", threshold=0.1
         )
 
-        groq_obj = AsyncGroqModel(self.logger, MachineLearningModelConfig())
+        groq_obj = AsyncGroqModel(MachineLearningModelConfig())
 
         service_obj = CreateDocumentationContentService(
             ml_client=groq_obj, logger=search_client._logger
@@ -76,13 +76,13 @@ class TestCreateDocumentationContentService:
             collection_name="test"
         )
         index_client = IndexingCollectionModel(
-            self.logger,
+            logger=self.logger,
             indexing_service_obj=solr_connection.get_index_client(
                 retriever_model=retriever_model, collection_url=collection_url
             ),
         )
         search_client = SemanticSearchModel(
-            self.logger,
+            logger=self.logger,
             semantic_search_service_obj=solr_connection.get_search_client(
                 collection_name="test",
                 retriever_model=retriever_model,
@@ -96,25 +96,23 @@ class TestCreateDocumentationContentService:
             "web development project", threshold=0.1
         )
 
-        groq_obj = AsyncGroqModel(self.logger, MachineLearningModelConfig())
+        groq_obj = AsyncGroqModel(cfg=MachineLearningModelConfig())
 
         service_obj = CreateDocumentationContentService(
-            ml_client=groq_obj, logger=search_client._logger
+            ml_client=groq_obj, logger=self.logger
         )
-        e = Exception("something went wrong")
         with (
-            patch.object(groq_obj, "_model.chat.completions.create") as groq_mock,
+            patch.object(groq_obj._model.chat.completions, "create") as groq_mock,
             patch.object(service_obj, "_logger") as mock_logger,
+            pytest.raises(Exception) as excinfo,
         ):
-            groq_mock.return_value = e
+            e = Exception("something went wrong")
             groq_mock.side_effect = e
 
-            result = await service_obj.create_document_content_from_messages(
+            await service_obj.create_document_content_from_messages(
                 search_result, "test"
             )
+        assert "something went wrong" in str(excinfo.value)
         mock_logger.error.assert_called_with(
-            [call(e), call(exc_info=True), call(stack_info=True)]
+            excinfo.value, exc_info=True, stack_info=True
         )
-        print(result, flush=True)
-        assert len(result) > 0
-        assert "Overview" in "".join(result)

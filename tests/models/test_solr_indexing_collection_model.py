@@ -88,5 +88,5 @@ class TestSolrIndexingCollectionModel:
                 indexing_model.index_data([], soft_commit=True)
         assert "Data to index cannot be empty" in str(exec_info.value)
         mock_logger.error.assert_has_calls(
-            [call("failed to index documents because length is less than one.")]
+            [call("failed to index documents because length is less than one")]
         )

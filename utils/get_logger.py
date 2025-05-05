@@ -3,7 +3,7 @@ import logging
 import os
 
 
-def get_logger()->logging.Logger:
+def get_logger() -> logging.Logger:
     caller_module = inspect.currentframe().f_back.f_globals["__name__"]
     logger = logging.getLogger(caller_module)
     logger.setLevel(logging.DEBUG)
@@ -12,8 +12,11 @@ def get_logger()->logging.Logger:
     os.makedirs(log_dir, exist_ok=True)
     log_file = os.path.join(log_dir, f"{caller_module}.log")
     fmt = "[{levelname}] [{asctime} {module}]:[{lineno}] [{funcName}] [{message}]"
-    
-    if not any(isinstance(h, logging.FileHandler) and h.baseFilename == log_file for h in logger.handlers):
+
+    if not any(
+        isinstance(h, logging.FileHandler) and h.baseFilename == log_file
+        for h in logger.handlers
+    ):
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(logging.Formatter(fmt=fmt, style="{"))
         logger.addHandler(file_handler)
