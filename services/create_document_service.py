@@ -1,8 +1,9 @@
-import datetime
+from datetime import datetime
 from logging import Logger
 
 from attr import dataclass
 from fastapi import HTTPException
+from ray import logger
 
 from db.config.solr_config import SolrConfig
 from db.services.connection_factory_service import ConnectionFactoryService
@@ -13,6 +14,9 @@ from models.semantic_search_model import SemanticSearchModel
 from models.solr_collection_model import SolrCollectionModel
 from services.config.config import MachineLearningModelConfig
 from services.create_collection_service import CreateCollectionServiceParams
+from services.create_documentation_content_service import (
+    CreateDocumentationContentService,
+)
 from utils.machine_learning_model import AsyncGroqModel
 
 
@@ -24,12 +28,12 @@ class CreateDocumentServiceParams:
     retriever_model: SentenceTransformerInterface
     rerank_model: SentenceTransformerInterface
     cfg: SolrConfig
+    ml_cfg: MachineLearningModelConfig
     start_date: datetime = None
     end_date: datetime = None
-    ml_cfg: MachineLearningModelConfig
 
 
-async def create_document_service(params: CreateCollectionServiceParams) -> str | None:
+async def create_document_service(params: CreateCollectionServiceParams) -> str:
     connection_obj = ConnectionFactoryService(cfg=params.cfg, logger=params.logger)
     collection_admin_service_obj = connection_obj.get_admin_client()
 
@@ -71,12 +75,18 @@ async def create_document_service(params: CreateCollectionServiceParams) -> str 
         return None
 
     try:
-        async with AsyncGroqModel(params.ml_cfg) as ml_model:
-            content = await ml_model.create(
-                messages=search_result, logger=params.logger
-            )
+        ml_client = AsyncGroqModel(params.ml_cfg)
+        content_service = CreateDocumentationContentService(
+            ml_client=ml_client, logger=logger
+        )
+        content = await content_service.create_document_content_from_messages(
+            documents=search_result, server_id=params.server_id
+        )
+
         params.logger.info("Document content created successfully")
         return content
     except Exception as e:
-        params.logger.error(f"Content generation failed: {str(e)}", exc_info=True)
-        raise HTTPException(500, "Content generation failed")
+        params.logger.error(
+            f"Content generation failed: {str(e)}", exc_info=True, stack_info=True
+        )
+        raise e

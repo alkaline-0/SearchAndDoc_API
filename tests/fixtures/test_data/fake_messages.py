@@ -46,14 +46,14 @@ documents: list[dict] = [
         "author_id": 104,
         "channel_id": 1,
         "message_content": "PostgreSQL is good. I'll set up the schema tonight and push it to GitHub.",
-        "created_at": "2025-04-17T10:08:00Z",
+        "created_at": "2025-04-13T10:08:00Z",
     },
     {
         "message_id": 8,
         "author_id": 103,
         "channel_id": 1,
         "message_content": "Cool. Should we use Tailwind for styling or stick with plain CSS for now?",
-        "created_at": "2025-04-17T10:09:20Z",
+        "created_at": "2025-04-15T10:09:20Z",
     },
     {
         "message_id": 9,
@@ -74,7 +74,7 @@ documents: list[dict] = [
         "author_id": 104,
         "channel_id": 1,
         "message_content": "Hey guys, wanna grab a burger after work? I heard about this new place that just opened up.",
-        "created_at": "2025-04-17T10:08:00Z",
+        "created_at": "2025-04-12T10:08:00Z",
     },
     {
         "message_id": 12,
@@ -109,7 +109,7 @@ documents: list[dict] = [
         "author_id": 104,
         "channel_id": 1,
         "message_content": "Use the `djangorestframework-simplejwt` package. Super easy to set up.",
-        "created_at": "2025-04-17T13:22:35Z",
+        "created_at": "2025-04-18T13:22:35Z",
     },
     {
         "message_id": 17,

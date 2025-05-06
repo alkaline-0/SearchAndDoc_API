@@ -151,20 +151,10 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         """Fetch search results in paginated chunks with date filtering."""
         try:
             solr_date_format = "%Y-%m-%dT%H:%M:%SZ"
-            date_filter = []
 
-            if not start_date and not end_date:
+            if not start_date or not end_date:
                 return self._fetch_results_in_chunks(
                     start=start, q=q, rows_count=rows_count
-                )
-
-            if start_date:
-                date_filter.append(
-                    f"created_at:[{start_date.strftime(solr_date_format)} TO *]"
-                )
-            if end_date:
-                date_filter.append(
-                    f"created_at:[* TO {end_date.strftime(solr_date_format)}]"
                 )
 
             params = {
@@ -173,9 +163,8 @@ class SemanticSearchService(SemanticSearchServiceInterface):
                 "fl": "message_id, message_content, author_id, channel_id, created_at",
                 "rows": rows_count,
                 "sort": "score desc, message_id asc",
-                "fq": date_filter if date_filter else None,
+                "fq": f"(created_at:[{start_date.strftime(solr_date_format)} TO {end_date.strftime(solr_date_format)}] OR (*:* NOT created_at:[* TO *]))",
             }
-
             params = {k: v for k, v in params.items() if v is not None}
 
             query_exec = self.solr_client.search(**params)

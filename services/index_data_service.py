@@ -10,6 +10,7 @@ from db.utils.interfaces.sentence_transformer_interface import (
 )
 from models.indexing_collection_model import IndexingCollectionModel
 from models.solr_collection_model import SolrCollectionModel
+from utils.get_logger import get_logger
 
 
 @dataclass
@@ -21,13 +22,15 @@ class IndexDataServiceParams:
     cfg: SolrConfig
 
 
-def _index_data_worker(data: list[dict], collection_url: str, cfg_dict: dict):
+def _index_data_worker(
+    data: list[dict], collection_url: str, cfg_dict: dict, logger: Logger
+):
     """Worker process that reinitializes dependencies from primitives"""
     # Reconstruct config from dictionary
     cfg = SolrConfig(**cfg_dict)
 
     # Recreate connections inside the worker
-    connection_obj = ConnectionFactoryService(cfg=cfg)
+    connection_obj = ConnectionFactoryService(cfg=cfg, logger=logger)
     index_data_service_obj = connection_obj.get_index_client(
         collection_url=collection_url
     )
@@ -76,7 +79,7 @@ def index_data_service(params: IndexDataServiceParams) -> bool:
         )
         process = multiprocessing.Process(
             target=_index_data_worker,
-            args=(params.data, collection_url, params.cfg.__dict__),
+            args=(params.data, collection_url, params.cfg.__dict__, get_logger()),
         )
         process.start()
         return True

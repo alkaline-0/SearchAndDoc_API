@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import call, patch
 
 import pytest
@@ -95,9 +96,16 @@ class TestSemanticSearchService:
             retriever_model=retriever_model,
             collection_name="test",
         )
+        solr_date_format = "%Y-%m-%dT%H:%M:%SZ"
+        start_date = datetime(2025, 4, 13)
+        end_date = datetime(2025, 4, 17)
         with patch.object(search_client, "_logger") as mock_logger:
             index_client.index_data(documents, soft_commit=True)
-            res = search_client.semantic_search(q="web backend implementation")
+            res = search_client.semantic_search(
+                q="web backend implementation",
+                start_date=start_date,  # Future date
+                end_date=end_date,
+            )
             mock_logger.info.assert_has_calls(
                 [
                     call("Created the embeddings for the query."),
@@ -111,6 +119,13 @@ class TestSemanticSearchService:
             )
         assert res is not None
         assert len(res[0]["message_content"]) > 0
+        assert all(
+            datetime.strptime(item["created_at"], solr_date_format).date()
+            >= start_date.date()
+            and datetime.strptime(item["created_at"], solr_date_format).date()
+            <= end_date.date()
+            for item in res
+        )
 
     def test_query_injection(self, solr_connection, rerank_model, retriever_model):
         collection_url = solr_connection.get_admin_client().create_collection(
