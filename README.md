@@ -155,12 +155,20 @@ uvicorn main:app --reload
 
 ## Project Structure
 .
-── main.py # FastAPI application entrypoint
-── routers/ # API routers (endpoints)
-── services/ # Core business logic and integrations
-── models/ # Pydantic models and data schemas
-── utils/ # Utility functions and helpers
-── db/ # Database configs and connection factories
-── tests/ # Automated tests
-── pyproject.toml # Project metadata and dependencies
-── README.md
+|── main.py # FastAPI application entrypoint
+
+|── routers/ # API routers (endpoints)
+
+|── services/ # Core business logic and integrations
+
+|── models/ # Pydantic models and data schemas
+
+|── utils/ # Utility functions and helpers
+
+|── db/ # Database configs and connection factories
+
+|── tests/ # Automated tests
+
+|── pyproject.toml # Project metadata and dependencies
+
+|── README.md
