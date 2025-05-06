@@ -35,6 +35,31 @@ The repo uses a **Monolothic** server architecture
 The system follows an **MVC-inspired** software architecture, structured for APIs (no front-end views)
 
 ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagram.png?raw=true)
+```mermaid
+classDiagram
+direction TD
+    %% ====================
+    %% Pattern Annotations
+    %% ====================
+    note for IndexDataRequest "DTO Pattern\n- API input structure"
+    note for CreateDocumentRequest "DTO Pattern\n- Clean transport model"
+    note for CreateCollectionRequest "DTO Pattern\n- Request schema"
+
+    note for IndexDataService "Service Layer Pattern\n- Contains logic for indexing"
+    note for CreateDocumentService "Service Layer Pattern\n- Document handling"
+    note for CollectionService "Service Layer Pattern\n- Collection mgmt"
+
+    note for SolrCollectionModel "Repository Pattern\n- DB abstraction"
+    note for SemanticSearchModel "Strategy Pattern\n- Plug-and-play search logic"
+
+    note for ConnectionFactoryService "Factory Pattern\n- Builds Solr clients\nFacade Pattern\n- Unified DB client access"
+
+    %% ====================
+    %% MVC + Architecture Notes
+    %% ====================
+    note "MVC Pattern (No View):\nRouters = Controllers\nServices = Business Logic\nModels = Data Layer"
+    note "Monolithic Server Architecture:\nAll components in a single deployable unit\nNo independent services"
+```
 
 
 - **Routers**:
@@ -130,12 +155,12 @@ uvicorn main:app --reload
 
 ## Project Structure
 .
-├── main.py # FastAPI application entrypoint
-├── routers/ # API routers (endpoints)
-├── services/ # Core business logic and integrations
-├── models/ # Pydantic models and data schemas
-├── utils/ # Utility functions and helpers
-├── db/ # Database configs and connection factories
-├── tests/ # Automated tests
-├── pyproject.toml # Project metadata and dependencies
-└── README.md
+── main.py # FastAPI application entrypoint
+── routers/ # API routers (endpoints)
+── services/ # Core business logic and integrations
+── models/ # Pydantic models and data schemas
+── utils/ # Utility functions and helpers
+── db/ # Database configs and connection factories
+── tests/ # Automated tests
+── pyproject.toml # Project metadata and dependencies
+── README.md

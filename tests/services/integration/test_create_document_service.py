@@ -1,5 +1,5 @@
-from datetime import datetime
 from collections.abc import Iterator
+from datetime import datetime
 from unittest.mock import patch
 
 import pytest
