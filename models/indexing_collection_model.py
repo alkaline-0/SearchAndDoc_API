@@ -18,5 +18,8 @@ class IndexingCollectionModel:
                 "failed to index documents because length is less than one"
             )
             raise SolrValidationError("Data to index cannot be empty")
+        if any(not len(item) for item in documents):
+            self._logger.error("failed to index documents because malformed data")
+            raise SolrValidationError("Cannot index malformed data.")
 
         self._indexing_client.index_data(data=documents, soft_commit=soft_commit)

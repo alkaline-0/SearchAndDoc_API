@@ -1,6 +1,7 @@
 import datetime
 from logging import Logger
 
+from attr import dataclass
 from fastapi import HTTPException
 
 from db.config.solr_config import SolrConfig
@@ -11,65 +12,71 @@ from db.utils.interfaces.sentence_transformer_interface import (
 from models.semantic_search_model import SemanticSearchModel
 from models.solr_collection_model import SolrCollectionModel
 from services.config.config import MachineLearningModelConfig
+from services.create_collection_service import CreateCollectionServiceParams
 from utils.machine_learning_model import AsyncGroqModel
 
 
-async def create_document_service(
-    server_id: str,
-    logger: Logger,
-    topic: str,
-    retriever_model: SentenceTransformerInterface,
-    rerank_model: SentenceTransformerInterface,
-    start_date: datetime = None,
-    end_date: datetime = None,
-) -> str | None:
-    cfg = SolrConfig()
-    connection_obj = ConnectionFactoryService(cfg=cfg, logger=logger)
+@dataclass
+class CreateDocumentServiceParams:
+    server_id: str
+    logger: Logger
+    topic: str
+    retriever_model: SentenceTransformerInterface
+    rerank_model: SentenceTransformerInterface
+    cfg: SolrConfig
+    start_date: datetime = None
+    end_date: datetime = None
+    ml_cfg: MachineLearningModelConfig
+
+
+async def create_document_service(params: CreateCollectionServiceParams) -> str | None:
+    connection_obj = ConnectionFactoryService(cfg=params.cfg, logger=params.logger)
     collection_admin_service_obj = connection_obj.get_admin_client()
 
     collection_model = SolrCollectionModel(
-        collection_name=server_id,
+        collection_name=params.server_id,
         collection_admin_service_obj=collection_admin_service_obj,
-        logger=logger,
+        logger=params.logger,
     )
 
-    if not collection_model.collection_exist(server_id):
-        logger.error(f"Collection {server_id} does not exist.")
+    if not collection_model.collection_exist():
+        params.logger.error(f"Collection {params.server_id} does not exist.")
         return None
 
-    logger.info(f"Found collection {server_id}")
+    params.logger.info(f"Found collection {params.server_id}")
     collection_url = collection_model.get_collection_url()
 
     semantic_search_service = connection_obj.get_search_client(
-        collection_name=server_id,
-        retriever_model=retriever_model,
-        rerank_model=rerank_model,
+        collection_name=params.server_id,
+        retriever_model=params.retriever_model,
+        rerank_model=params.rerank_model,
         collection_url=collection_url,
     )
     semantic_search_model = SemanticSearchModel(
-        logger=logger,
+        logger=params.logger,
         semantic_search_service_obj=semantic_search_service,
     )
 
     try:
         search_result = semantic_search_model.semantic_search(
-            q=topic, start_date=start_date, end_date=end_date
+            q=params.topic, start_date=params.start_date, end_date=params.end_date
         )
-        logger.info(f"Retrieved {len(search_result)} documents")
+        params.logger.info(f"Retrieved {len(search_result)} documents")
     except Exception as e:
-        logger.error(f"Search failed: {str(e)}", exc_info=True)
+        params.logger.error(f"Search failed: {str(e)}", exc_info=True)
         raise HTTPException(500, "Search failed")
 
     if not search_result:
-        logger.error("No documents found")
+        params.logger.error("No documents found")
         return None
 
     try:
-        ml_cfg = MachineLearningModelConfig()
-        async with AsyncGroqModel(ml_cfg) as ml_model:
-            content = await ml_model.create(messages=search_result, logger=logger)
-        logger.info("Document content created successfully")
+        async with AsyncGroqModel(params.ml_cfg) as ml_model:
+            content = await ml_model.create(
+                messages=search_result, logger=params.logger
+            )
+        params.logger.info("Document content created successfully")
         return content
     except Exception as e:
-        logger.error(f"Content generation failed: {str(e)}", exc_info=True)
+        params.logger.error(f"Content generation failed: {str(e)}", exc_info=True)
         raise HTTPException(500, "Content generation failed")

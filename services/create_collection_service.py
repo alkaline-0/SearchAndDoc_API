@@ -1,34 +1,45 @@
 from logging import Logger
 
+from attr import dataclass
+
 from db.config.solr_config import SolrConfig
 from db.services.connection_factory_service import ConnectionFactoryService
 from models.solr_collection_model import SolrCollectionModel
 
 
-def create_collection(
-    server_id: str, shards: int, replicas: int, logger: Logger, cfg: SolrConfig
-) -> bool:
-    connection_obj = ConnectionFactoryService(cfg=cfg, logger=logger)
+@dataclass
+class CreateCollectionServiceParams:
+    server_id: str
+    shards: int
+    replicas: int
+    logger: Logger
+    cfg: SolrConfig
+
+
+def create_collection(params: CreateCollectionServiceParams) -> bool:
+    connection_obj = ConnectionFactoryService(cfg=params.cfg, logger=params.logger)
     collection_admin_service_obj = connection_obj.get_admin_client()
 
     collection_model = SolrCollectionModel(
-        collection_name=server_id,
+        collection_name=params.server_id,
         collection_admin_service_obj=collection_admin_service_obj,
-        logger=logger,
+        logger=params.logger,
     )
 
     if collection_model.collection_exist():
-        logger.error(f"Collection {server_id} already exists.")
+        params.logger.error(f"Collection {params.server_id} already exists.")
         return False
 
     try:
-        collection_model.create_collection(num_shards=shards, replicas_count=replicas)
-        logger.info(
-            f"Created collection {server_id} with {shards} shards and {replicas} replicas."
+        collection_model.create_collection(
+            num_shards=params.shards, replicas_count=params.replicas
+        )
+        params.logger.info(
+            f"Created collection {params.server_id} with {params.shards} shards and {params.replicas} replicas."
         )
         return True
     except Exception as e:
-        logger.error(
+        params.logger.error(
             f"Failed to create collection: {str(e)}", exc_info=True, stack_info=True
         )
         raise

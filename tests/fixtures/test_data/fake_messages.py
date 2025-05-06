@@ -1,4 +1,4 @@
-documents = [
+documents: list[dict] = [
     {
         "message_id": 1,
         "author_id": 101,
