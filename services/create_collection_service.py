@@ -6,9 +6,8 @@ from models.solr_collection_model import SolrCollectionModel
 
 
 def create_collection(
-    server_id: str, shards: int, replicas: int, logger: Logger
+    server_id: str, shards: int, replicas: int, logger: Logger, cfg: SolrConfig
 ) -> bool:
-    cfg = SolrConfig()
     connection_obj = ConnectionFactoryService(cfg=cfg, logger=logger)
     collection_admin_service_obj = connection_obj.get_admin_client()
 
@@ -18,7 +17,7 @@ def create_collection(
         logger=logger,
     )
 
-    if collection_model.collection_exist(server_id):
+    if collection_model.collection_exist():
         logger.error(f"Collection {server_id} already exists.")
         return False
 
