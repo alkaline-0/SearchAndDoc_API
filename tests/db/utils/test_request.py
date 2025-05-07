@@ -22,7 +22,7 @@ def test_make_solr_request_catch_general_exception():
                 logger=logger,
             )
         mock_logger.error.assert_has_calls(
-            [call(excinfo.value), call(stack_info=True), call(exec_info=True)]
+            [call(excinfo.value), call(stack_info=True), call(exc_info=True)]
         )
         assert "Unexpected error occurred:" in str(excinfo.value)
 
@@ -46,6 +46,6 @@ def test_make_solr_request_catch_solr_connection_exception():
                 logger=logger,
             )
         mock_logger.error.assert_has_calls(
-            [call(e), call(stack_info=True), call(exec_info=True)]
+            [call(e), call(stack_info=True), call(exc_info=True)]
         )
         assert "Unexpected error occurred:" in str(excinfo.value)

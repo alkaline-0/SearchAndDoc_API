@@ -179,5 +179,5 @@ class TestSemanticSearchService:
 
             index_client.index_data(documents, soft_commit=True)
             search_client.semantic_search(q="web backend implementation")
-        mock_logger.error.assert_has_calls([call(e, stack_info=True, exec_info=True)])
+        mock_logger.error.assert_has_calls([call(e, stack_info=True, exc_info=True)])
         assert "Something went wrong!" in str(excinfo.value)

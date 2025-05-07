@@ -155,7 +155,7 @@ uvicorn main:app --reload
 
 ## Project Structure
 .
-|── main.py # FastAPI application entrypoint
+|── app/ # FastAPI application entrypoint
 
 |── routers/ # API routers (endpoints)
 
