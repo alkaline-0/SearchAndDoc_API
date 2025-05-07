@@ -39,7 +39,7 @@ def _index_data_worker(
         collection_url=collection_url, retriever_model=retriever_model
     )
     index_data_model = IndexingCollectionModel(
-        indexing_service_obj=index_data_service_obj
+        indexing_service_obj=index_data_service_obj, logger=logger
     )
 
     # Perform the actual indexing

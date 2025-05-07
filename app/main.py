@@ -6,30 +6,28 @@ from fastapi import FastAPI
 from db.config.solr_config import SolrConfig
 from db.utils.sentence_transformer import STSentenceTransformer
 from routers import create_collection_router, create_document_router, index_data_router
+from services.config.config import MachineLearningModelConfig
 
-ml_models = {}
 config = {}
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     cfg = SolrConfig()
-    ml_models["RERANK_MODEL"] = STSentenceTransformer(
-        cfg.RERANK_MODEL_NAME, device="mps"
-    )
-    ml_models["RETRIEVER_MODEL"] = STSentenceTransformer(
+    config["RERANK_MODEL"] = STSentenceTransformer(cfg.RERANK_MODEL_NAME, device="mps")
+    config["RETRIEVER_MODEL"] = STSentenceTransformer(
         cfg.RETRIEVER_MODEL_NAME, device="mps"
     )
-    config["solr_config"] = SolrConfig()
+    config["solr_config"] = cfg
+    config["ml_config"] = MachineLearningModelConfig()
 
     yield
 
-    ml_models.clear()
+    config.clear()
 
 
 def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
-    app.state.ml_models = ml_models
     app.state.config = config
 
     # routers

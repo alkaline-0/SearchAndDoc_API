@@ -27,7 +27,7 @@ async def index_data(
             server_id=payload.server_id,
             data=payload.data,
             logger=logger,
-            retriever_model=request.app.state.ml_models["RETRIEVER_MODEL"],
+            retriever_model=request.app.state.config["RETRIEVER_MODEL"],
             cfg=request.app.state.config["solr_config"],
         )
 

@@ -5,7 +5,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
-from services.create_document_service import create_document_service
+from db.utils.exceptions import SolrError
+from services.create_document_service import (
+    CreateDocumentServiceParams,
+    create_document_service,
+)
 from utils.get_logger import get_logger
 
 router = APIRouter(tags=["create-document"])
@@ -13,7 +17,7 @@ router = APIRouter(tags=["create-document"])
 
 class CreateDocumentRequest(BaseModel):
     server_id: Annotated[str, Field(min_length=1, max_length=18)]
-    topic: Annotated[str, Field(min_length=1, max_length=18)]
+    topic: Annotated[str, Field(min_length=1, max_length=35)]
     start_date: str
     end_date: str
 
@@ -30,23 +34,27 @@ async def create_document(
 ):
     try:
         # Validate models exist
-        retriever_model = request.app.state.ml_models.get("RETRIEVER_MODEL")
-        rerank_model = request.app.state.ml_models.get("RERANK_MODEL")
+        retriever_model = request.app.state.config.get("RETRIEVER_MODEL")
+        rerank_model = request.app.state.config.get("RERANK_MODEL")
         if not retriever_model or not rerank_model:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Models not initialized",
             )
-
-        result = await create_document_service(
+        solr_date_format = "%Y-%m-%dT%H:%M:%SZ"
+        request_params = CreateDocumentServiceParams(
             server_id=payload.server_id,
             topic=payload.topic,
             logger=logger,
             retriever_model=retriever_model,
             rerank_model=rerank_model,
-            start_date=datetime(payload.start_date),
-            end_date=datetime(payload.end_date),
+            start_date=datetime.strptime(payload.start_date, solr_date_format),
+            end_date=datetime.strptime(payload.end_date, solr_date_format),
+            cfg=request.app.state.config.get("solr_config"),
+            ml_cfg=request.app.state.config.get("ml_config"),
         )
+
+        result = await create_document_service(params=request_params)
         if not result:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -54,11 +62,7 @@ async def create_document(
             )
         return {"generated_document": result}
 
-    except HTTPException as e:
-        logger.error(f"Client error: {str(e)}", exc_info=True)
-        raise
-
-    except Exception as e:
+    except SolrError as e:
         logger.error(f"Server error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

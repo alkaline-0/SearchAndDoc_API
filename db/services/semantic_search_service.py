@@ -208,7 +208,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
             )
             return rows_count_resp["response"]["numFound"]
         except Exception as e:
-            self._logger.error(e, stack_info=True, exec_info=True)
+            self._logger.error(e, stack_info=True, exc_info=True)
             raise e
 
     def _process_reranked_results(
@@ -238,5 +238,5 @@ class SemanticSearchService(SemanticSearchServiceInterface):
             query_exec = self.solr_client.search(**params)
             return query_exec.docs
         except Exception as e:
-            self._logger.error(e, stack_info=True, exec_info=True)
+            self._logger.error(e, stack_info=True, exc_info=True)
             raise e
