@@ -36,8 +36,8 @@ def request(cfg: SolrConfig, params: dict[str, Any], url: str, logger: Logger) -
         return json.loads(pysolr.force_unicode(response.content))
 
     except requests.exceptions.RequestException as error:
-        logger.error(error, stack_info=True, exec_info=True)
+        logger.error(error, stack_info=True, exc_info=True)
         raise SolrConnectionError(error)
     except Exception as error:
-        logger.error(error, stack_info=True, exec_info=True)
+        logger.error(error, stack_info=True, exc_info=True)
         raise SolrError(error)
