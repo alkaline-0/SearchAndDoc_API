@@ -16,7 +16,7 @@ class CreateCollectionServiceParams:
     cfg: SolrConfig
 
 
-def create_collection(params: CreateCollectionServiceParams) -> bool:
+def create_collection_service(params: CreateCollectionServiceParams) -> bool:
     connection_obj = ConnectionFactoryService(cfg=params.cfg, logger=params.logger)
     collection_admin_service_obj = connection_obj.get_admin_client()
 

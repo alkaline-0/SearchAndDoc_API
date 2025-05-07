@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from logging import Logger
 from typing import Annotated
 
@@ -14,8 +14,8 @@ router = APIRouter(tags=["create-document"])
 class CreateDocumentRequest(BaseModel):
     server_id: Annotated[str, Field(min_length=1, max_length=18)]
     topic: Annotated[str, Field(min_length=1, max_length=18)]
-    start_date: datetime
-    end_date: datetime
+    start_date: str
+    end_date: str
 
 
 class CreateDocumentResponse(BaseModel):
@@ -44,8 +44,8 @@ async def create_document(
             logger=logger,
             retriever_model=retriever_model,
             rerank_model=rerank_model,
-            start_date=payload.start_date,
-            end_date=payload.end_date,
+            start_date=datetime(payload.start_date),
+            end_date=datetime(payload.end_date),
         )
         if not result:
             raise HTTPException(

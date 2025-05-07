@@ -27,9 +27,7 @@ async def index_data(
             server_id=payload.server_id,
             data=payload.data,
             logger=logger,
-            retriever_model=request.app.state.ml_models[
-                "RETRIEVER_MODEL"
-            ],  # Fixed: Use request.app
+            retriever_model=request.app.state.ml_models["RETRIEVER_MODEL"],
         )
 
         if not success:
@@ -38,7 +36,7 @@ async def index_data(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        return {"status": "success"}  # Proper JSON response
+        return {"status": "success"}
 
     except Exception as e:
         logger.error(f"Indexing failed: {str(e)}", exc_info=True)
