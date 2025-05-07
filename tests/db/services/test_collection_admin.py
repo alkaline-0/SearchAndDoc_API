@@ -1,10 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-import pytest
-
 from db.services.collection_admin_service import CollectionAdminService
-from db.utils.exceptions import SolrConnectionError
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 from utils.get_logger import get_logger
 
