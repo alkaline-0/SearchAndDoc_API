@@ -4,7 +4,7 @@ import pytest
 
 from services.create_collection_service import (
     CreateCollectionServiceParams,
-    create_collection,
+    create_collection_service,
 )
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 
@@ -21,7 +21,7 @@ class TestCreateCollectionService:
                 logger=solr_connection._logger,
                 cfg=MockSolrConfig(),
             )
-            success = create_collection(params=params)
+            success = create_collection_service(params=params)
 
         assert success is True
         mock_logger.info.assert_called_with(
@@ -41,8 +41,8 @@ class TestCreateCollectionService:
                 logger=solr_connection._logger,
                 cfg=MockSolrConfig(),
             )
-            create_collection(params=params)
-            failure = create_collection(
+            create_collection_service(params=params)
+            failure = create_collection_service(
                 params=params,
             )
         mock_logger.error.assert_has_calls(
@@ -61,7 +61,7 @@ class TestCreateCollectionService:
                     logger=solr_connection._logger,
                     cfg=MockSolrConfig(),
                 )
-                failure = create_collection(params=params)
+                failure = create_collection_service(params=params)
             assert "Failed to create collection:" in str(excinfo.value)
             mock_logger.error.assert_has_calls(
                 [

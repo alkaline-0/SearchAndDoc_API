@@ -9,7 +9,7 @@ from db.utils.interfaces.sentence_transformer_interface import (
 )
 from services.create_collection_service import (
     CreateCollectionServiceParams,
-    create_collection,
+    create_collection_service,
 )
 from services.index_data_service import IndexDataServiceParams, index_data_service
 from tests.db.mocks.mock_solr_config import MockSolrConfig
@@ -33,7 +33,7 @@ class TestIndexDataService:
                 logger=solr_connection._logger,
                 cfg=MockSolrConfig(),
             )
-            create_collection(params=params)
+            create_collection_service(params=params)
 
             # Act
             index_data_service_params = IndexDataServiceParams(
@@ -98,7 +98,7 @@ class TestIndexDataService:
                 logger=solr_connection._logger,
                 cfg=MockSolrConfig(),
             )
-            create_collection(params=params)
+            create_collection_service(params=params)
             # Act/Assert
             with pytest.raises(Exception) as excinfo:
                 index_data_service_params = IndexDataServiceParams(

@@ -11,7 +11,7 @@ from db.utils.interfaces.sentence_transformer_interface import (
 from services.config.config import MachineLearningModelConfig
 from services.create_collection_service import (
     CreateCollectionServiceParams,
-    create_collection,
+    create_collection_service,
 )
 from services.create_document_service import (
     CreateDocumentServiceParams,
@@ -43,7 +43,7 @@ class TestCreateDocumentService:
                 logger=mock_logger,
                 cfg=MockSolrConfig(),
             )
-            create_collection(params=collection_params)
+            create_collection_service(params=collection_params)
 
             # Index sample data
             index_params = IndexDataServiceParams(
@@ -126,7 +126,7 @@ class TestCreateDocumentService:
                 logger=mock_logger,
                 cfg=MockSolrConfig(),
             )
-            create_collection(params=collection_params)
+            create_collection_service(params=collection_params)
 
             # Create params with invalid date range
             ml_config = MachineLearningModelConfig()
