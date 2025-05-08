@@ -148,8 +148,8 @@ uvicorn main:app --reload
 ```
 
 
-- The API will be available at [http://127.0.0.1:8000](http://127.0.0.1:8000)
-- Interactive API docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- The API will be available at [http://35.204.26.63:3001](http://35.204.26.63:3001)
+- Interactive API docs: [http://35.204.26.63:3001/docs](http://35.204.26.63:3001/docs)
 
 ---
 
