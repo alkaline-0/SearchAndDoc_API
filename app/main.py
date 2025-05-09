@@ -14,9 +14,9 @@ config = {}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     cfg = SolrConfig()
-    config["RERANK_MODEL"] = STSentenceTransformer(cfg.RERANK_MODEL_NAME, device="mps")
+    config["RERANK_MODEL"] = STSentenceTransformer(cfg.RERANK_MODEL_NAME, device="cpu")
     config["RETRIEVER_MODEL"] = STSentenceTransformer(
-        cfg.RETRIEVER_MODEL_NAME, device="mps"
+        cfg.RETRIEVER_MODEL_NAME, device="cpu"
     )
     config["solr_config"] = cfg
     config["ml_config"] = MachineLearningModelConfig()

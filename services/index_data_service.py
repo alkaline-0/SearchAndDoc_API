@@ -8,7 +8,6 @@ from db.services.connection_factory_service import ConnectionFactoryService
 from db.utils.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
-from db.utils.sentence_transformer import STSentenceTransformer
 from models.indexing_collection_model import IndexingCollectionModel
 from models.solr_collection_model import SolrCollectionModel
 from utils.get_logger import get_logger
@@ -28,11 +27,11 @@ def _index_data_worker(
     collection_url: str,
     cfg_dict: dict,
     logger: Logger,
+    retriever_model: SentenceTransformerInterface,
 ):
     """Worker process that reinitializes dependencies from primitives"""
     # Reconstruct config from dictionary
     cfg = SolrConfig(**cfg_dict)
-    retriever_model = STSentenceTransformer(cfg.RETRIEVER_MODEL_NAME, device="cpu")
     # Recreate connections inside the worker
     connection_obj = ConnectionFactoryService(cfg=cfg, logger=logger)
     index_data_service_obj = connection_obj.get_index_client(
@@ -88,6 +87,7 @@ def index_data_service(params: IndexDataServiceParams) -> bool:
                 collection_url,
                 params.cfg.__dict__,
                 get_logger(),
+                params.retriever_model,
             ),
         )
         process.start()
