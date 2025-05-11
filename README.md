@@ -11,6 +11,7 @@ A backend API for a Discord app that generates documents throuh providing a disc
 - [Usecases](#use-cases)
 - [Design Patterns](#design-patterns-and-diagrams)
 - [Quality Attributes](#quality-attributes)
+- [Notes](#notes)
 
 ---
 
@@ -37,11 +38,13 @@ The repo uses a **Monolothic** server architecture
 
 ### System architecture
 
+
 The system follows an **MVC-inspired** software architecture, structured for APIs (no front-end views)
 
 ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/diagram.png?raw=true)
 
 - **Routers**:
+
 
   - Receive and validate HTTP requests.
   - Delegate processing to the appropriate service layer.
@@ -49,11 +52,13 @@ The system follows an **MVC-inspired** software architecture, structured for API
 
 - **Service Layers**:
 
+
   - Handles the business workflow.
   - Orchestrate communication between routes, models, and LLMs.
   - Located in the `services/` directory.
 
 - **Models**:
+
 
   - Define Pydantic schemas and provide data models for interacting with data service layers and the database.
   - validates the objects based on the business rules, then passes them to the data service layer which will format them to go into the database.
@@ -61,17 +66,20 @@ The system follows an **MVC-inspired** software architecture, structured for API
 
 - **Infrastructure Layer**:
 
+
   - Manage creation and configuration of database connections and clients.
   - Ensure efficient and reusable connection handling.
   - Located in the `db/infrastructure` directory.
 
 - **Data Service Layers**:
 
+
   - Orchisterates complex workflow with data access layer
   - Ensures Separation of concerns and abstraction.
   - Located in the `db/services` directory.
 
 - **Data access Layers**:
+
 
   - Encapsulates the logic for interacting with the Solr database.
   - Performs CRUD operations on database level.
@@ -81,6 +89,7 @@ The system follows an **MVC-inspired** software architecture, structured for API
   - Supports advanced search queries and retrieval.
 
 ### Project Structure
+
 
 .
 |── app/ # FastAPI application entrypoint
@@ -105,6 +114,7 @@ The system follows an **MVC-inspired** software architecture, structured for API
 
 ## Installation
 
+
 ### Requirements
 
 - Python >= 3.9
@@ -114,13 +124,16 @@ The system follows an **MVC-inspired** software architecture, structured for API
 
 ### Setup
 
+
 1. **Install Python 3.9.20 with uv**
+
 
 ```shell
 uv python install 3.9
 ```
 
 2. **Create and Activate a Virtual Environment**
+
 
 ```shell
 uv venv
@@ -129,11 +142,14 @@ source .venv/bin/activate
 
 3. **Install Project Dependencies**
 
+
 ```shell
 uv sync
 ```
 
+
 4. **Create .env file from .env.example**
+
 
 ```shell
 populate the values in the .env file
@@ -141,17 +157,22 @@ to setup auth for solr make sure to edit solr-config.sh with the password you wi
 and make sure to have a groq api key
 ```
 
+
 5. **Start docker containers**
+
 
 ```shell
 docker-compose up -d
 ```
 
+
 6. ** Run the uvicorn server**
+
 
 ```shell
  ./.venv/bin/uvicorn app.main:create_app --factory --host 0.0.0.0 --port 3001 --reload
 ```
+
 
 ---
 
@@ -169,11 +190,17 @@ pre-commit run -a
 
 Execute all tests with:
 
+
 ```shell
 python -m pytest
 ```
 
+```
+
 ### Deployment
+
+- The API is available at [http://35.204.26.63:3001](http://35.204.26.63:3001)
+- Interactive API docs: [http://35.204.26.63:3001/docs](http://35.204.26.63:3001/docs)
 
 - The API is available at [http://35.204.26.63:3001](http://35.204.26.63:3001)
 - Interactive API docs: [http://35.204.26.63:3001/docs](http://35.204.26.63:3001/docs)
@@ -182,9 +209,11 @@ python -m pytest
 
 ## Use cases:
 
+
 This project provides a backend for managing, indexing, and searching Discord messages and related documents using Solr. Below are the main use cases currently supported:
 
 ### Implemented Use Cases (User-Facing)
+
 
 - Create Collection
 
@@ -213,6 +242,7 @@ This project provides a backend for managing, indexing, and searching Discord me
 
 ### Internal/Admin Use Cases
 
+
 - Delete Collection
 
   - Admins can delete existing Solr collections for maintenance or cleanup purposes.
@@ -225,12 +255,16 @@ This project provides a backend for managing, indexing, and searching Discord me
 - rate limiting.
 - caching.
 
+- White listing urls of servers that can communicate with this api.
+- rate limiting.
+- caching.
+
 ---
 
 ## Design Patterns and diagrams:
 
-1. Behavioral:
 
+1. Behavioral:
 - STRATEGY PATTERN:
   - used in semantic search service layer (db/services/semantic_search_service.py) by injecting reranker strategy and retreiever strategy. This allows plugging in different algorithms without having coupling between semantic search service and the implementation of the algorithms
     ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/strategy_pattern.png?raw=true)
@@ -240,26 +274,27 @@ This project provides a backend for managing, indexing, and searching Discord me
   - SemanticSearchServiceInterface (abstract class) defines the overall method signature. SemanticSearchService implements these abstract methods, customizing the logic specific to semantic search using retrieval and reranking strategies.
 - COMMAND Pattern:
   Each service function encapsulates a single action (services called by the routers.)
+  - By injecting SolrHttpClientInterface (an abstraction over the actual request logic), it enables different strategies for sending HTTP requests.
+  - By providing a specific algorithm (sentence encoding) for transforming sentences, this allows different implementations of strategy pattern in sentece encoding.
+
 
 2. Creational:
-
 - FACTORY pattern:
   - The factory manages the instantiation of different components needed to interact with Apache Solr and perform search/indexing tasks.
     ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/factory_pattern.png?raw=true)
-    ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/factory_pattern.png?raw=true)
 
 3. Structural:
-
 - FACADE pattern:
   - Semantic Search Model simplifies the interaction with the semantic_search_service_obj by providing a single method (semantic_search) that internally handles the query validation and delegates the actual search logic to the underlying search service.
 - ADAPTER pattern:
   - SentenceTransformerInterface adapts a third-party transformer model to be used in the application.
-
 ---
 
 ## Quality Attributes:
 
+
 ✅ 1. Performance
+
 
 - Heavy indexing is offloaded to a separate process via multiprocessing, which avoids blocking the main application thread.
 - Lazy evaluation / short-circuiting: For example, semantic search checks early for valid query length and skips unnecessary processing if the input is invalid.
@@ -268,14 +303,17 @@ This project provides a backend for managing, indexing, and searching Discord me
 
 ✅ 2. Scalability
 
+
 - Modular, interface-driven design:
   - Services like SolrCollectionModel, IndexingCollectionModel, and SemanticSearchModel are abstracted from implementation via interfaces (e.g., SentenceTransformerInterface), making it easy to swap in scalable backends (e.g., cloud-based ML services or distributed search engines).
 - Horizontal task delegation:
+  - Indexing workloads can be parallelized or distributed due to isolated worker functions (\_index_data_worker).
   - Indexing workloads can be parallelized or distributed due to isolated worker functions (\_index_data_worker).
 - Decoupling of API and logic layers:
   - FastAPI routes only orchestrate services—they don’t embed logic, enabling future scaling into microservices if needed.
 
 ✅ 3. Maintainability
+
 
 - Clear separation of concerns:
   - Controllers (routes), models, services, and configurations are well-separated.
@@ -283,3 +321,7 @@ This project provides a backend for managing, indexing, and searching Discord me
   - Strategy, Template, and Adapter patterns are employed to cleanly separate variable logic.
 - Dependency injection:
   - Components like Logger and configuration objects (SolrConfig, MLConfig) are injected, making testing and substitution easier.
+
+---
+## NOTES:
+- For software modeling and design:[self-assessment essay](https://docs.google.com/document/d/13K_y-UfkHjAFg98gU7aQlARE9pYtL-xETg8AqRJ4rp0/edit?usp=sharing)
