@@ -9,6 +9,8 @@ A backend API for a Discord app that generates documents throuh providing a disc
 - [Architecture](#server-architecture)
 - [Installation](#installation)
 - [Usecases](#use-cases)
+- [Design Patterns](#design-patterns-and-diagrams)
+- [Quality Attributes](#quality-attributes)
 
 ---
 
@@ -206,11 +208,42 @@ This project provides a backend for managing, indexing, and searching Discord me
     ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/strategy_pattern.png?raw=true)
     - By injecting SolrHttpClientInterface (an abstraction over the actual request logic), it enables different strategies for sending HTTP requests.
     - By providing a specific algorithm (sentence encoding) for transforming sentences, this allows different implementations of strategy pattern in sentece encoding.
-
   - TEMPLATE pattern:
     - SemanticSearchServiceInterface (abstract class) defines the overall method signature. SemanticSearchService implements these abstract methods, customizing the logic specific to semantic search using retrieval and reranking strategies.
-
+  - COMMAND Pattern:
+      Each service function encapsulates a single action (services called by the routers.)
 2. Creational:
   - FACTORY pattern:
     - The factory manages the instantiation of different components needed to interact with Apache Solr and perform search/indexing tasks.
      ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/factory_pattern.png?raw=true)
+
+3. Structural:
+  - FACADE pattern:
+    - Semantic Search Model simplifies the interaction with the semantic_search_service_obj by providing a single method (semantic_search) that internally handles the query validation and delegates the actual search logic to the underlying search service.
+  - ADAPTER pattern:
+    - SentenceTransformerInterface adapts a third-party transformer model to be used in the application.
+
+---
+
+## Quality Attributes:
+✅ 1. Performance
+- Heavy indexing is offloaded to a separate process via multiprocessing, which avoids blocking the main application thread.
+- Lazy evaluation / short-circuiting: For example, semantic search checks early for valid query length and skips unnecessary processing if the input is invalid.
+- Lightweight, asynchronous endpoints: FastAPI endpoints are non-blocking (async), supporting high-throughput with low latency.
+- Soft commits for fast indexing and defer persistence using background tasks.
+
+✅ 2. Scalability
+- Modular, interface-driven design:
+  - Services like SolrCollectionModel, IndexingCollectionModel, and SemanticSearchModel are abstracted from implementation via interfaces (e.g., SentenceTransformerInterface), making it easy to swap in scalable backends (e.g., cloud-based ML services or distributed search engines).
+- Horizontal task delegation:
+  - Indexing workloads can be parallelized or distributed due to isolated worker functions (_index_data_worker).
+- Decoupling of API and logic layers:
+  - FastAPI routes only orchestrate services—they don’t embed logic, enabling future scaling into microservices if needed.
+
+✅ 3. Maintainability
+- Clear separation of concerns:
+  - Controllers (routes), models, services, and configurations are well-separated.
+- Use of design patterns:
+  - Strategy, Template, and Adapter patterns are employed to cleanly separate variable logic.
+- Dependency injection:
+  - Components like Logger and configuration objects (SolrConfig, MLConfig) are injected, making testing and substitution easier.
