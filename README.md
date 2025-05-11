@@ -205,4 +205,12 @@ This project provides a backend for managing, indexing, and searching Discord me
     - used in semantic search service layer (db/services/semantic_search_service.py) by injecting reranker strategy and retreiever strategy. This allows plugging in different algorithms without having coupling between semantic search service and the implementation of the algorithms
     ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/strategy_pattern.png?raw=true)
     - By injecting SolrHttpClientInterface (an abstraction over the actual request logic), it enables different strategies for sending HTTP requests.
+    - By providing a specific algorithm (sentence encoding) for transforming sentences, this allows different implementations of strategy pattern in sentece encoding.
 
+  - TEMPLATE pattern:
+    - SemanticSearchServiceInterface (abstract class) defines the overall method signature. SemanticSearchService implements these abstract methods, customizing the logic specific to semantic search using retrieval and reranking strategies.
+
+2. Creational:
+  - FACTORY pattern:
+    - The factory manages the instantiation of different components needed to interact with Apache Solr and perform search/indexing tasks.
+     ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/factory_pattern.png?raw=true)

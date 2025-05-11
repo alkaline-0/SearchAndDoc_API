@@ -1,12 +1,12 @@
 from logging import Logger
 
-import pysolr
-
 from db.config.solr_config import SolrConfig
 from db.data_access.collection_admin_service import CollectionAdminService
 from db.data_access.interfaces.collection_admin_service_interface import (
     CollectionAdminServiceInterface,
 )
+from db.data_access.interfaces.pysolr_interface import SolrClientInterface
+from db.data_access.pysolr import PysolrClient
 from db.data_access.solr_http_client import SolrHttpClient
 from db.infrastructure.interfaces.connection_factory_service_interface import (
     ConnectionFactoryServiceInterface,
@@ -34,19 +34,19 @@ class ConnectionFactoryService(ConnectionFactoryServiceInterface):
 
     def __init__(self, cfg: SolrConfig, logger: Logger) -> None:
         self.cfg = cfg
-        self._pysolr_obj = None
+        self._pysolr_clients: dict[str, SolrClientInterface] = {}
         self._logger = logger
         self._http_client = SolrHttpClient(cfg=self.cfg, logger=self._logger)
 
-    def _get_connection_obj(self, collection_url: str) -> pysolr.Solr:
-        if not self._pysolr_obj:
-            self._pysolr_obj = pysolr.Solr(
+    def _get_connection_obj(self, collection_url: str) -> SolrClientInterface:
+        if not self._pysolr_clients.get(collection_url):
+            self._pysolr_clients[collection_url] = PysolrClient(
                 url=collection_url,
                 timeout=300,
                 auth=(self.cfg.USER_NAME, self.cfg.PASSWORD),
                 always_commit=True,
             )
-        return self._pysolr_obj
+        return self._pysolr_clients.get(collection_url)
 
     def get_admin_client(self) -> CollectionAdminServiceInterface:
         return CollectionAdminService(

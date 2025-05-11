@@ -6,11 +6,7 @@ from typing import Any
 
 class SolrClientInterface(ABC):
     @abstractmethod
-    def add(self, documents: list[dict[str, Any]]) -> Any:
-        pass
-
-    @abstractmethod
-    def commit(self, soft_commit: bool = True) -> Any:
+    def add(self, documents: list[dict[str, Any]], soft_commit: bool) -> Any:
         pass
 
     @abstractmethod

@@ -77,4 +77,4 @@ class IndexDataService(IndexDataServiceInterface):
         for i, item in enumerate(data):
             item["bert_vector"] = [float(w) for w in embeddings[i]]
 
-        self.solr_client.add(data, softCommit=soft_commit)
+        self.solr_client.add(data, soft_commit=soft_commit)

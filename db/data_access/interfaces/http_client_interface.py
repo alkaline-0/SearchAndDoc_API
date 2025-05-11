@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 
+
 class SolrHttpClientInterface(ABC):
     @abstractmethod
     def send_request(self, url: str, params: dict) -> dict:
