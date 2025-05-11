@@ -215,7 +215,7 @@ This project provides a backend for managing, indexing, and searching Discord me
 2. Creational:
   - FACTORY pattern:
     - The factory manages the instantiation of different components needed to interact with Apache Solr and perform search/indexing tasks.
-     ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/factory_pattern.png?raw=true)
+     ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/factory-pattern.png?raw=true)
 
 3. Structural:
   - FACADE pattern:
