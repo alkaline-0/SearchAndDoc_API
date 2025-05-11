@@ -153,8 +153,8 @@ Execute all tests with:
 python -m pytest
 ````
 ### Deployment
-- The API is available at [http://127.0.0.1:8000](http://127.0.0.1:8000)
-- Interactive API docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- The API is available at [http://35.204.26.63:3001](http://127.0.0.1:8000)
+- Interactive API docs: [http://35.204.26.63:3001/docs](http://127.0.0.1:8000/docs)
 
 ---
 
@@ -215,7 +215,7 @@ This project provides a backend for managing, indexing, and searching Discord me
 2. Creational:
   - FACTORY pattern:
     - The factory manages the instantiation of different components needed to interact with Apache Solr and perform search/indexing tasks.
-     ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/factory-pattern.png?raw=true)
+     ![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/factory_pattern.png?raw=true)
 
 3. Structural:
   - FACADE pattern:
