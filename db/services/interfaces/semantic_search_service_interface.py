@@ -2,6 +2,28 @@ import datetime
 from abc import ABC, abstractmethod
 from logging import Logger
 
+from attr import dataclass
+
+from db.config.solr_config import SolrConfig
+from db.data_access.interfaces.pysolr_interface import SolrClientInterface
+from db.utils.interfaces.rerank_strategy_interface import RerankStrategy
+from db.utils.interfaces.retrieval_strategy_interface import RetrievalStrategy
+from db.utils.interfaces.sentence_transformer_interface import (
+    SentenceTransformerInterface,
+)
+
+
+@dataclass
+class SemanticSearchServiceAttrs:
+    logger: Logger
+    solr_client: SolrClientInterface
+    retriever_model: SentenceTransformerInterface
+    rerank_model: SentenceTransformerInterface
+    cfg: SolrConfig
+    collection_name: str
+    retriever_strategy: RetrievalStrategy
+    reranker_strategy: RerankStrategy
+
 
 class SemanticSearchServiceInterface(ABC):
     """Interface for Solr connection and client creation."""

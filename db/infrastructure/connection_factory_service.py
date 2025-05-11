@@ -7,20 +7,25 @@ from db.data_access.collection_admin_service import CollectionAdminService
 from db.data_access.interfaces.collection_admin_service_interface import (
     CollectionAdminServiceInterface,
 )
-from db.services.index_data_service import IndexDataService
 from db.infrastructure.interfaces.connection_factory_service_interface import (
     ConnectionFactoryServiceInterface,
 )
+from db.services.index_data_service import IndexDataService
 from db.services.interfaces.index_data_service_interface import (
     IndexDataServiceInterface,
 )
 from db.services.interfaces.semantic_search_service_interface import (
     SemanticSearchServiceInterface,
 )
-from db.services.semantic_search_service import SemanticSearchService
+from db.services.semantic_search_service import (
+    SemanticSearchService,
+    SemanticSearchServiceAttrs,
+)
+from db.utils.cos_similarity_reranker import CosineSimilarityReranker
 from db.utils.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
+from db.utils.solr_knn_search import SolrKnnSearch
 
 
 class ConnectionFactoryService(ConnectionFactoryServiceInterface):
@@ -47,19 +52,28 @@ class ConnectionFactoryService(ConnectionFactoryServiceInterface):
     def get_search_client(
         self,
         collection_name: str,
-        collection_url: str,
-        rerank_model: SentenceTransformerInterface,
         retriever_model: SentenceTransformerInterface,
+        rerank_model: SentenceTransformerInterface,
+        collection_url: str,
     ) -> SemanticSearchServiceInterface:
         """Get client for specific collection."""
+        solr_client = self._get_connection_obj(collection_url=collection_url)
+        retriever_strategy = SolrKnnSearch(
+            solr_client=solr_client, cfg=self.cfg, logger=self._logger
+        )
+        rerank_strategy = CosineSimilarityReranker()
 
         return SemanticSearchService(
-            solr_client=self._get_connection_obj(collection_url=collection_url),
-            retriever_model=retriever_model,
-            rerank_model=rerank_model,
-            cfg=self.cfg,
-            collection_name=collection_name,
-            logger=self._logger,
+            attributes=SemanticSearchServiceAttrs(
+                logger=self._logger,
+                solr_client=solr_client,
+                retriever_model=retriever_model,
+                rerank_model=rerank_model,
+                cfg=self.cfg,
+                collection_name=collection_name,
+                retriever_strategy=retriever_strategy,
+                reranker_strategy=rerank_strategy,
+            )
         )
 
     def get_index_client(

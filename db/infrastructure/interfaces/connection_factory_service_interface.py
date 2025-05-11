@@ -26,9 +26,9 @@ class ConnectionFactoryServiceInterface(ABC):
     def get_search_client(
         self,
         collection_name: str,
-        collection_url: str,
-        rerank_model: SentenceTransformerInterface,
         retriever_model: SentenceTransformerInterface,
+        rerank_model: SentenceTransformerInterface,
+        collection_url: str,
     ) -> SemanticSearchServiceInterface:
         pass
 

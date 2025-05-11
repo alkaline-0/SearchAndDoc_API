@@ -58,13 +58,13 @@ class TestSemanticSearchService:
         ]
         with (
             patch.object(
-                search_client,
-                "_retrieve_docs_with_knn",
+                search_client.retriever_strategy,
+                "retrieve",
                 return_value=mock_docs,
             ),
             patch.object(
-                search_client,
-                "_process_reranked_results",
+                search_client.reranker_strategy,
+                "rerank",
                 return_value=mock_scores,
             ),
             patch.object(search_client, "_logger") as mock_logger,
@@ -169,8 +169,10 @@ class TestSemanticSearchService:
             collection_name="test",
         )
         with (
-            patch.object(search_client, "_logger") as mock_logger,
-            patch.object(search_client.solr_client, "search") as solr_mock,
+            patch.object(search_client.retriever_strategy, "_logger") as mock_logger,
+            patch.object(
+                search_client.retriever_strategy.solr_client, "search"
+            ) as solr_mock,
             pytest.raises(Exception) as excinfo,
         ):
             e = Exception("Something went wrong!")

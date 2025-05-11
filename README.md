@@ -1,15 +1,22 @@
 # SearchAndDoc_API
 
-A backend API for a Discord app that enhances server search and leverages Large Language Models (LLMs) to generate documentation from project information discussed in Discord channels.
+A backend API for a Discord app that generates documents throuh providing a discord channel id, a topic, and a date period. The project leverages Large Language Models (LLMs) to rewrite the messages into content suitable for documentation through filtering Discord channels and selecting only relevant information.
+
+## Table of Contents
+
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Architecture](#server-architecture)
+- [Installation](#installation)
+- [Usecases](#use-cases)
 
 ---
 
 ## Features
 
-- **Advanced Search**: Enhanced, context-aware search capabilities for Discord servers.
-- **Automated Documentation**: Uses LLMs to generate documentation based on channel discussions.
-- **REST API**: Exposes endpoints for integration and automation.
-- **Modular Design**: Clean separation of concerns for maintainability and extensibility.
+- Create Solr Collection
+- Index data in solr collection
+- Perform semantic search which selects the messages realted to a topic and provides a document with the rewritten messages in markdown.
 
 ---
 
@@ -18,11 +25,6 @@ A backend API for a Discord app that enhances server search and leverages Large 
 - **Python 3.9+**
 - **FastAPI** – Modern, high-performance web framework for APIs
 - **Uvicorn** – Lightning-fast ASGI server for FastAPI
-- **Pytest** – Robust testing framework
-- **pre-commit** – Code formatting and linting hooks
-- **pyenv** – Python version and virtual environment management
-- **uv** – Fast dependency management with `pyproject.toml`
-- **LLM Integration** – For generating documentation (see code for details)
 - **Solr** – Search engine backend
 
 ---
@@ -31,97 +33,105 @@ A backend API for a Discord app that enhances server search and leverages Large 
 
 The repo uses a **Monolothic** server architecture
 
-## System architecture
+### System architecture
 The system follows an **MVC-inspired** software architecture, structured for APIs (no front-end views)
 
-![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagram.png?raw=true)
-```mermaid
-classDiagram
-direction TD
-    %% ====================
-    %% Pattern Annotations
-    %% ====================
-    note for IndexDataRequest "DTO Pattern\n- API input structure"
-    note for CreateDocumentRequest "DTO Pattern\n- Clean transport model"
-    note for CreateCollectionRequest "DTO Pattern\n- Request schema"
-
-    note for IndexDataService "Service Layer Pattern\n- Contains logic for indexing"
-    note for CreateDocumentService "Service Layer Pattern\n- Document handling"
-    note for CollectionService "Service Layer Pattern\n- Collection mgmt"
-
-    note for SolrCollectionModel "Repository Pattern\n- DB abstraction"
-    note for SemanticSearchModel "Strategy Pattern\n- Plug-and-play search logic"
-
-    note for ConnectionFactoryService "Factory Pattern\n- Builds Solr clients\nFacade Pattern\n- Unified DB client access"
-
-    %% ====================
-    %% MVC + Architecture Notes
-    %% ====================
-    note "MVC Pattern (No View):\nRouters = Controllers\nServices = Business Logic\nModels = Data Layer"
-    note "Monolithic Server Architecture:\nAll components in a single deployable unit\nNo independent services"
-```
-
+![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/diagram.png?raw=true)
 
 - **Routers**:
   - Receive and validate HTTP requests.
   - Delegate processing to the appropriate service layer.
   - Located in the `routers/` directory.
 
-- **Models**:
-  - Define Pydantic schemas for request/response validation.
-  - Provide data models for interacting with service layers and the database.
-  - Located in the `models/` directory.
-
 - **Service Layers**:
-  - Contain business logic for search, indexing, and documentation generation.
-  - Orchestrate communication between models, database, and LLMs.
+  - Handles the business workflow.
+  - Orchestrate communication between routes, models, and LLMs.
   - Located in the `services/` directory.
 
-- **Factory Functions**:
+- **Models**:
+  - Define Pydantic schemas and provide data models for interacting with data service layers and the database.
+  - validates the objects based on the business rules, then passes them to the data service layer which will format them to go into the database.
+  - Located in the `models/` directory.
+
+- **Infrastructure Layer**:
   - Manage creation and configuration of database connections and clients.
   - Ensure efficient and reusable connection handling.
-  - Located in the `services/` and `utils/` directories.
+  - Located in the `db/infrastructure` directory.
+
+- **Data Service Layers**:
+  - Orchisterates complex workflow with data access layer
+  - Ensures Separation of concerns and abstraction.
+  - Located in the `db/services` directory.
+
+- **Data access Layers**:
+  - Encapsulates the logic for interacting with the Solr database.
+  - Performs CRUD operations on database level.
 
 - **Database (Solr)**:
   - Stores and indexes Discord messages and metadata.
   - Supports advanced search queries and retrieval.
 
+
+### Project Structure
+.
+|── app/ # FastAPI application entrypoint
+
+|── routers/ # API routers (endpoints)
+
+|── services/ # Service layers
+
+|── models/ # Pydantic models and data schemas
+
+|── utils/ # Utility functions and helpers
+
+|── db/ # Database configs and connection factories
+
+|── tests/ # Automated tests
+
+|── pyproject.toml # Project metadata and dependencies
+
+|── README.md
+
 ---
 
-## Requirements
+## Installation
+### Requirements
 
 - Python >= 3.9
-- [pyenv](https://github.com/pyenv/pyenv) (recommended)
+- FastAPI and uvicorn
 - [uv](https://docs.astral.sh/uv/) (for dependency management)
-- Running [Solr](https://solr.apache.org/) instance (see `db/config/solr_config.py` for configuration)
+- Docker
 
----
-
-## Setup
-
-1. **Install Python 3.9.20 with pyenv**
+### Setup
+1. **Install Python 3.9.20 with uv**
 ```shell
-CONFIGURE_OPTS="--with-openssl=/opt/Homebrew/Cellar/openssl@3/3.4.1" pyenv install -v 3.9.20
+uv python install 3.9
 ```
 
-2. **Set Local Python Version**
+2. **Create and Activate a Virtual Environment**
 ```shell
-pyenv local 3.9.20
+uv venv
+source .venv/bin/activate
 ```
 
-3. **Create and Activate a Virtual Environment**
+3. **Install Project Dependencies**
 ```shell
-pyenv virtualenv 3.9.20 <virtual_env_name>
-pyenv activate <virtual_env_name>
-```
-
-4. **Install Project Dependencies**
-```shell
-pip install uv
 uv sync
 ```
-
-
+4. **Create .env file from .env.example**
+```shell
+populate the values in the .env file
+to setup auth for solr make sure to edit solr-config.sh with the password you will use in docker
+and make sure to have a groq api key
+```
+5. **Start docker containers**
+```shell
+docker-compose up -d
+```
+6. ** Run the uvicorn server**
+```shell
+ ./.venv/bin/uvicorn app.main:create_app --factory --host 0.0.0.0 --port 3001 --reload
+```
 ---
 
 ## Development
@@ -138,37 +148,60 @@ pre-commit run -a
 
 Execute all tests with:
 ```shell
-python3 -m pytest
+python -m pytest
 ````
-
-### Run the Server
-Start the FastAPI server with:
-```shell
-uvicorn main:app --reload
-```
-
 
 - The API will be available at [http://127.0.0.1:8000](http://127.0.0.1:8000)
 - Interactive API docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ---
 
-## Project Structure
-.
-|── app/ # FastAPI application entrypoint
+## Use cases:
+This project provides a backend for managing, indexing, and searching Discord messages and related documents using Solr. Below are the main use cases currently supported:
 
-|── routers/ # API routers (endpoints)
+### Implemented Use Cases (User-Facing)
+- Create Collection
 
-|── services/ # Core business logic and integrations
+  - Users can create new Solr collections to organize and store documents.
 
-|── models/ # Pydantic models and data schemas
+  - Endpoint: POST /create-collection
 
-|── utils/ # Utility functions and helpers
+  - Status: ✅ Implemented
 
-|── db/ # Database configs and connection factories
+- Index Documents
 
-|── tests/ # Automated tests
+  - Users can index (add) new documents/messages into a specified Solr collection for later retrieval and search.
 
-|── pyproject.toml # Project metadata and dependencies
+  - Endpoint: POST /index-data
 
-|── README.md
+  - Status: ✅ Implemented
+
+- Create document
+
+  - Users can create a document out of the indexed discord messages through specifying a topic.
+  - Users can create a document out of the indexed discord messages in a specified time period through specifying a topic and a start-date and end-date.
+
+  - Endpoint POST /create-document
+
+  - Status: ✅ Implemented
+
+### Internal/Admin Use Cases
+- Delete Collection
+
+  - Admins can delete existing Solr collections for maintenance or cleanup purposes.
+
+  - Status: ✅ Implemented (admin/internal use only)
+
+### Planned/Not Yet Implemented
+  - White listing urls of servers that can communicate with this api.
+  - rate limiting.
+  - caching.
+
+---
+
+## Design Patterns and diagrams:
+1. Behavioral:
+  - STRATEGY PATTERN:
+    - used in semantic search service layer to allow plugging in different algorithms without having coupling between semantic search service and the implementation of the algorithms
+
+![alt text](https://github.com/alkaline-0/SearchAndDoc_API/blob/main/diagrams/strategy_pattern.png?raw=true)

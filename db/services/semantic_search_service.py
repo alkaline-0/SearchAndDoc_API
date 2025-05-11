@@ -1,34 +1,20 @@
 import datetime
 import re
-from logging import Logger
 
 import ray
-from sentence_transformers import util
 from solrq import Value
 
-from db.config.solr_config import SolrConfig
-from db.data_access.interfaces.pysolr_interface import SolrClientInterface
 from db.data_access.request import request
 from db.services.interfaces.semantic_search_service_interface import (
+    SemanticSearchServiceAttrs,
     SemanticSearchServiceInterface,
 )
 from db.utils.encode import create_embeddings
 from db.utils.exceptions import SolrError
-from db.utils.interfaces.sentence_transformer_interface import (
-    SentenceTransformerInterface,
-)
 
 
 class SemanticSearchService(SemanticSearchServiceInterface):
-    def __init__(
-        self,
-        logger: Logger,
-        solr_client: SolrClientInterface,
-        retriever_model: SentenceTransformerInterface,
-        rerank_model: SentenceTransformerInterface,
-        cfg: SolrConfig,
-        collection_name: str,
-    ) -> None:
+    def __init__(self, attributes: SemanticSearchServiceAttrs) -> None:
         """Creates a new semantic search service object.
 
         Args:
@@ -44,12 +30,14 @@ class SemanticSearchService(SemanticSearchServiceInterface):
             SolrError: for malicious queries
         """
 
-        self.solr_client = solr_client
-        self.rerank_model = rerank_model
-        self.retriever_model = retriever_model
-        self.cfg = cfg
-        self.collection_name = collection_name
-        self._logger = logger
+        self.solr_client = attributes.solr_client
+        self.rerank_model = attributes.rerank_model
+        self.retriever_model = attributes.retriever_model
+        self.cfg = attributes.cfg
+        self.collection_name = attributes.collection_name
+        self._logger = attributes.logger
+        self.retriever_strategy = attributes.retriever_strategy
+        self.reranker_strategy = attributes.reranker_strategy
 
     def semantic_search(
         self,
@@ -69,7 +57,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
 
         self._logger.info("Created the embeddings for the query.")
 
-        [docs] = self._retrieve_docs_with_knn(
+        [docs] = self.retriever_strategy.retrieve(
             embedding=ray.get(retriever_future),
             total_rows=self.get_rows_count(),
             start_date=start_date,
@@ -95,7 +83,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         query_embedding = ray.get(query_rerank_future)
         candidate_embeddings = ray.get(candidate_futures)
 
-        sorted_reranking_results = self._process_reranked_results(
+        sorted_reranking_results = self.reranker_strategy.rerank(
             query_embedding=query_embedding,
             candidate_embeddings=candidate_embeddings,
             docs=docs,
@@ -118,86 +106,6 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         ]
         return any(re.search(pattern, query, re.IGNORECASE) for pattern in patterns)
 
-    def _retrieve_docs_with_knn(
-        self, embedding: list, total_rows: int, start_date: datetime, end_date: datetime
-    ) -> list:
-        """Ray-optimized parallel fetching for large result sets"""
-        chunk_size = 5000
-        futures = []
-        knn_q = "{!knn f=bert_vector}" + str([float(w) for w in embedding[0]])
-        for start in range(0, total_rows, chunk_size):
-            actual_rows = min(chunk_size, total_rows - start)
-            batch_res = self._fetch_results_in_chunks_with_date(
-                q=knn_q,
-                start=start,
-                rows_count=actual_rows,
-                start_date=start_date,
-                end_date=end_date,
-            )
-
-            if len(batch_res) > 0:
-                futures.append(batch_res)
-
-        return futures
-
-    def _fetch_results_in_chunks_with_date(
-        self,
-        start: int,
-        q: str,
-        rows_count: int,
-        start_date: datetime.datetime = None,
-        end_date: datetime.datetime = None,
-    ) -> list:
-        """Fetch search results in paginated chunks with date filtering."""
-        try:
-            solr_date_format = "%Y-%m-%dT%H:%M:%SZ"
-
-            if not start_date or not end_date:
-                return self._fetch_results_in_chunks(
-                    start=start, q=q, rows_count=rows_count
-                )
-
-            params = {
-                "q": q,
-                "start": start,
-                "fl": "message_id, message_content, author_id, channel_id, created_at",
-                "rows": rows_count,
-                "sort": "score desc, message_id asc",
-                "fq": f"(created_at:[{start_date.strftime(solr_date_format)} TO {end_date.strftime(solr_date_format)}] OR (*:* NOT created_at:[* TO *]))",
-            }
-            params = {k: v for k, v in params.items() if v is not None}
-
-            query_exec = self.solr_client.search(**params)
-            return query_exec.docs
-        except Exception as e:
-            self._logger.error(
-                f"Failed to fetch chunk {start}-{start+rows_count}: {str(e)}",
-                exc_info=True,
-                stack_info=True,
-            )
-            raise
-
-    def _rerank_knn_results(
-        self, query_embedding, candidate_embeddings, solr_response: dict
-    ):
-        """Re-ranks KNN results using semantic similarity.
-        Args:
-            query: Query string
-            solr_response: Solr response containing KNN results
-        Returns:
-            List of tuples containing re-ranked results
-        """
-        scores = util.cos_sim(query_embedding, candidate_embeddings)[0].cpu().tolist()
-
-        return sorted(
-            zip(
-                solr_response,
-                scores,
-            ),
-            key=lambda x: x[1],
-            reverse=True,
-        )
-
     def get_rows_count(self) -> int:
         try:
             rows_count_resp = request(
@@ -207,36 +115,6 @@ class SemanticSearchService(SemanticSearchServiceInterface):
                 logger=self._logger,
             )
             return rows_count_resp["response"]["numFound"]
-        except Exception as e:
-            self._logger.error(e, stack_info=True, exc_info=True)
-            raise e
-
-    def _process_reranked_results(
-        self, query_embedding, candidate_embeddings, docs
-    ) -> list[tuple]:
-        """Efficient result processing with tensor operations"""
-        scores = util.cos_sim(query_embedding, candidate_embeddings)[0].cpu().tolist()
-
-        return sorted(
-            zip(
-                docs,
-                scores,
-            ),
-            key=lambda x: x[1],
-            reverse=True,
-        )
-
-    def _fetch_results_in_chunks(self, start: int, q: str, rows_count: int) -> list:
-        try:
-            params = {
-                "q": q,
-                "start": start,
-                "fl": "message_id, message_content, author_id, channel_id",
-                "rows": rows_count,
-                "sort": "score desc, message_id asc",
-            }
-            query_exec = self.solr_client.search(**params)
-            return query_exec.docs
         except Exception as e:
             self._logger.error(e, stack_info=True, exc_info=True)
             raise e
