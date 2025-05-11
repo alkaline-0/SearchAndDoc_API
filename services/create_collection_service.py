@@ -3,7 +3,7 @@ from logging import Logger
 from attr import dataclass
 
 from db.config.solr_config import SolrConfig
-from db.services.connection_factory_service import ConnectionFactoryService
+from db.infrastructure.connection_factory_service import ConnectionFactoryService
 from models.solr_collection_model import SolrCollectionModel
 
 

@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="720pt" height="200pt" viewBox="0.00 0.00 720.00 199.87">
+<g id="graph0" class="graph" transform="scale(0.682142 0.682142) rotate(0) translate(4 289)">
+<title>UML</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-289 1051.5,-289 1051.5,4 -4,4"/>
+<!-- ConnectionFactoryServiceInterface -->
+<g id="node1" class="node">
+<title>ConnectionFactoryServiceInterface</title>
+<polygon fill="lightgray" stroke="black" points="481.64,-285 266.61,-285 266.61,-249 481.64,-249 481.64,-285"/>
+<text text-anchor="middle" x="374.12" y="-262.8" font-family="Times,serif" font-size="14.00">ConnectionFactoryServiceInterface</text>
+</g>
+<!-- CollectionAdminServiceInterface -->
+<g id="node2" class="node">
+<title>CollectionAdminServiceInterface</title>
+<polygon fill="lightgray" stroke="black" points="787.88,-210 582.96,-210 582.96,-174 787.88,-174 787.88,-210"/>
+<text text-anchor="middle" x="685.42" y="-187.8" font-family="Times,serif" font-size="14.00">CollectionAdminServiceInterface</text>
+</g>
+<!-- SolrClientInterface -->
+<g id="node3" class="node">
+<title>SolrClientInterface</title>
+<polygon fill="lightgray" stroke="black" points="747.07,-264 623.78,-264 623.78,-228 747.07,-228 747.07,-264"/>
+<text text-anchor="middle" x="685.42" y="-241.8" font-family="Times,serif" font-size="14.00">SolrClientInterface</text>
+</g>
+<!-- IndexDataServiceInterface -->
+<g id="node4" class="node">
+<title>IndexDataServiceInterface</title>
+<polygon fill="lightgray" stroke="black" points="768.43,-36 602.42,-36 602.42,0 768.43,0 768.43,-36"/>
+<text text-anchor="middle" x="685.42" y="-13.8" font-family="Times,serif" font-size="14.00">IndexDataServiceInterface</text>
+</g>
+<!-- SemanticSearchServiceInterface -->
+<g id="node5" class="node">
+<title>SemanticSearchServiceInterface</title>
+<polygon fill="lightgray" stroke="black" points="784.37,-90 586.47,-90 586.47,-54 784.37,-54 784.37,-90"/>
+<text text-anchor="middle" x="685.42" y="-67.8" font-family="Times,serif" font-size="14.00">SemanticSearchServiceInterface</text>
+</g>
+<!-- SolrHTTPClientInterface -->
+<g id="node6" class="node">
+<title>SolrHTTPClientInterface</title>
+<polygon fill="lightgray" stroke="black" points="1047.5,-150 889.21,-150 889.21,-114 1047.5,-114 1047.5,-150"/>
+<text text-anchor="middle" x="968.35" y="-127.8" font-family="Times,serif" font-size="14.00">SolrHTTPClientInterface</text>
+</g>
+<!-- ConnectionFactoryService -->
+<g id="node7" class="node">
+<title>ConnectionFactoryService</title>
+<polygon fill="none" stroke="black" points="165.29,-177 0,-177 0,-141 165.29,-141 165.29,-177"/>
+<text text-anchor="middle" x="82.65" y="-154.8" font-family="Times,serif" font-size="14.00">ConnectionFactoryService</text>
+</g>
+<!-- ConnectionFactoryService&#45;&gt;ConnectionFactoryServiceInterface -->
+<g id="edge1" class="edge">
+<title>ConnectionFactoryService-&gt;ConnectionFactoryServiceInterface</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M114.85,-177.31C134.17,-188.21 159.71,-201.85 183.29,-212 214.58,-225.47 250.16,-236.77 281.99,-245.55"/>
+<polygon fill="none" stroke="black" points="281.05,-248.92 291.62,-248.15 282.88,-242.16 281.05,-248.92"/>
+<text text-anchor="middle" x="215.95" y="-238.63" font-family="Times,serif" font-size="14.00">implements</text>
+</g>
+<!-- CollectionAdminService -->
+<g id="node8" class="node">
+<title>CollectionAdminService</title>
+<polygon fill="none" stroke="black" points="451.72,-177 296.53,-177 296.53,-141 451.72,-141 451.72,-177"/>
+<text text-anchor="middle" x="374.12" y="-154.8" font-family="Times,serif" font-size="14.00">CollectionAdminService</text>
+</g>
+<!-- ConnectionFactoryService&#45;&gt;CollectionAdminService -->
+<g id="edge7" class="edge">
+<title>ConnectionFactoryService-&gt;CollectionAdminService</title>
+<path fill="none" stroke="black" d="M165.44,-159C202.87,-159 247.28,-159 285.41,-159"/>
+<polygon fill="black" stroke="black" points="284.99,-162.5 294.99,-159 284.99,-155.5 284.99,-162.5"/>
+<text text-anchor="middle" x="215.95" y="-163.2" font-family="Times,serif" font-size="14.00">creates</text>
+</g>
+<!-- PysolrClient -->
+<g id="node9" class="node">
+<title>PysolrClient</title>
+<polygon fill="none" stroke="black" points="417.13,-231 331.12,-231 331.12,-195 417.13,-195 417.13,-231"/>
+<text text-anchor="middle" x="374.12" y="-208.8" font-family="Times,serif" font-size="14.00">PysolrClient</text>
+</g>
+<!-- ConnectionFactoryService&#45;&gt;PysolrClient -->
+<g id="edge8" class="edge">
+<title>ConnectionFactoryService-&gt;PysolrClient</title>
+<path fill="none" stroke="black" d="M165.71,-176.54C171.65,-177.73 177.56,-178.9 183.29,-180 229.14,-188.81 281.42,-197.82 319.49,-204.2"/>
+<polygon fill="black" stroke="black" points="318.89,-207.65 329.33,-205.84 320.04,-200.74 318.89,-207.65"/>
+<text text-anchor="middle" x="215.95" y="-195.71" font-family="Times,serif" font-size="14.00">creates</text>
+</g>
+<!-- IndexDataService -->
+<g id="node10" class="node">
+<title>IndexDataService</title>
+<polygon fill="none" stroke="black" points="432.27,-56 315.98,-56 315.98,-20 432.27,-20 432.27,-56"/>
+<text text-anchor="middle" x="374.12" y="-33.8" font-family="Times,serif" font-size="14.00">IndexDataService</text>
+</g>
+<!-- ConnectionFactoryService&#45;&gt;IndexDataService -->
+<g id="edge9" class="edge">
+<title>ConnectionFactoryService-&gt;IndexDataService</title>
+<path fill="none" stroke="black" d="M115.38,-140.69C134.68,-129.94 160.01,-116.49 183.29,-106.2 222.94,-88.68 268.63,-72.16 305.25,-59.76"/>
+<polygon fill="black" stroke="black" points="306.01,-63.2 314.38,-56.7 303.78,-56.56 306.01,-63.2"/>
+<text text-anchor="middle" x="215.95" y="-110.4" font-family="Times,serif" font-size="14.00">creates</text>
+</g>
+<!-- SemanticSearchService -->
+<g id="node11" class="node">
+<title>SemanticSearchService</title>
+<polygon fill="none" stroke="black" points="448.21,-123 300.04,-123 300.04,-87 448.21,-87 448.21,-123"/>
+<text text-anchor="middle" x="374.12" y="-100.8" font-family="Times,serif" font-size="14.00">SemanticSearchService</text>
+</g>
+<!-- ConnectionFactoryService&#45;&gt;SemanticSearchService -->
+<g id="edge10" class="edge">
+<title>ConnectionFactoryService-&gt;SemanticSearchService</title>
+<path fill="none" stroke="black" d="M165.71,-141.65C171.66,-140.46 177.56,-139.3 183.29,-138.2 217.68,-131.6 255.69,-124.85 288.6,-119.17"/>
+<polygon fill="black" stroke="black" points="288.8,-122.69 298.06,-117.55 287.61,-115.79 288.8,-122.69"/>
+<text text-anchor="middle" x="215.95" y="-142.4" font-family="Times,serif" font-size="14.00">creates</text>
+</g>
+<!-- CollectionAdminService&#45;&gt;CollectionAdminServiceInterface -->
+<g id="edge2" class="edge">
+<title>CollectionAdminService-&gt;CollectionAdminServiceInterface</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M451.98,-167.2C487.96,-171.04 531.54,-175.69 571.2,-179.92"/>
+<polygon fill="none" stroke="black" points="570.72,-183.39 581.04,-180.97 571.46,-176.43 570.72,-183.39"/>
+<text text-anchor="middle" x="532.3" y="-182.66" font-family="Times,serif" font-size="14.00">implements</text>
+</g>
+<!-- SolrHttpClient -->
+<g id="node12" class="node">
+<title>SolrHttpClient</title>
+<polygon fill="none" stroke="black" points="734.65,-150 636.2,-150 636.2,-114 734.65,-114 734.65,-150"/>
+<text text-anchor="middle" x="685.42" y="-127.8" font-family="Times,serif" font-size="14.00">SolrHttpClient</text>
+</g>
+<!-- CollectionAdminService&#45;&gt;SolrHttpClient -->
+<g id="edge11" class="edge">
+<title>CollectionAdminService-&gt;SolrHttpClient</title>
+<path fill="none" stroke="black" d="M451.98,-152.29C505.31,-147.64 575.34,-141.52 624.54,-137.23"/>
+<polygon fill="black" stroke="black" points="624.78,-140.72 634.44,-136.36 624.18,-133.75 624.78,-140.72"/>
+<text text-anchor="middle" x="532.3" y="-152.12" font-family="Times,serif" font-size="14.00">uses</text>
+</g>
+<!-- PysolrClient&#45;&gt;SolrClientInterface -->
+<g id="edge3" class="edge">
+<title>PysolrClient-&gt;SolrClientInterface</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M417.48,-217.52C467.53,-222.86 551.62,-231.83 612.06,-238.28"/>
+<polygon fill="none" stroke="black" points="611.61,-241.75 621.93,-239.33 612.36,-234.79 611.61,-241.75"/>
+<text text-anchor="middle" x="532.3" y="-236.66" font-family="Times,serif" font-size="14.00">implements</text>
+</g>
+<!-- IndexDataService&#45;&gt;IndexDataServiceInterface -->
+<g id="edge4" class="edge">
+<title>IndexDataService-&gt;IndexDataServiceInterface</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M432.58,-34.29C477.01,-31.41 539.44,-27.37 591.03,-24.04"/>
+<polygon fill="none" stroke="black" points="590.94,-27.55 600.69,-23.41 590.49,-20.57 590.94,-27.55"/>
+<text text-anchor="middle" x="532.3" y="-33.99" font-family="Times,serif" font-size="14.00">implements</text>
+</g>
+<!-- SemanticSearchService&#45;&gt;SemanticSearchServiceInterface -->
+<g id="edge5" class="edge">
+<title>SemanticSearchService-&gt;SemanticSearchServiceInterface</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M448.42,-97.18C486.14,-93.16 532.89,-88.17 574.8,-83.7"/>
+<polygon fill="none" stroke="black" points="575.11,-87.18 584.69,-82.64 574.37,-80.22 575.11,-87.18"/>
+<text text-anchor="middle" x="532.3" y="-95.66" font-family="Times,serif" font-size="14.00">implements</text>
+</g>
+<!-- SemanticSearchService&#45;&gt;SolrHttpClient -->
+<g id="edge12" class="edge">
+<title>SemanticSearchService-&gt;SolrHttpClient</title>
+<path fill="none" stroke="black" d="M448.42,-111.4C502.12,-116.09 574.11,-122.37 624.4,-126.76"/>
+<polygon fill="black" stroke="black" points="623.97,-130.24 634.24,-127.62 624.58,-123.26 623.97,-130.24"/>
+<text text-anchor="middle" x="532.3" y="-125.12" font-family="Times,serif" font-size="14.00">uses</text>
+</g>
+<!-- SolrHttpClient&#45;&gt;SolrHTTPClientInterface -->
+<g id="edge6" class="edge">
+<title>SolrHttpClient-&gt;SolrHTTPClientInterface</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M735.04,-132C774.14,-132 830.14,-132 877.37,-132"/>
+<polygon fill="none" stroke="black" points="877.34,-135.5 887.34,-132 877.34,-128.5 877.34,-135.5"/>
+<text text-anchor="middle" x="838.55" y="-136.2" font-family="Times,serif" font-size="14.00">implements</text>
+</g>
+</g>
+</svg>

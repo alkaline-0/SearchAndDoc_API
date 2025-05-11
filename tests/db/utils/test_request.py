@@ -4,8 +4,8 @@ import pytest
 import requests
 
 from db.config.solr_config import SolrConfig
+from db.data_access.solr_http_client import SolrHttpClient
 from db.utils.exceptions import SolrConnectionError, SolrError
-from db.utils.request import request
 from utils.get_logger import get_logger
 
 
@@ -15,11 +15,10 @@ def test_make_solr_request_catch_general_exception():
         cfg_wrong_password = SolrConfig(PASSWORD="wrong")
         logger = get_logger()
         with patch.object(logger, "error") as mock_logger:
-            request(
-                cfg=cfg_wrong_password,
+            http_client = SolrHttpClient(cfg=cfg_wrong_password, logger=logger)
+            http_client.send_request(
                 params={},
                 url=cfg_wrong_password.BASE_URL,
-                logger=logger,
             )
         mock_logger.error.assert_has_calls(
             [call(excinfo.value), call(stack_info=True), call(exc_info=True)]
@@ -39,11 +38,10 @@ def test_make_solr_request_catch_solr_connection_exception():
             e = SolrConnectionError("connection failed")
             requests_mock.return_value = e
             requests_mock.side_effect = e
-            request(
-                cfg=cfg_wrong_password,
+            http_client = SolrHttpClient(cfg=cfg_wrong_password, logger=logger)
+            http_client.send_request(
                 params={},
                 url=cfg_wrong_password.BASE_URL,
-                logger=logger,
             )
         mock_logger.error.assert_has_calls(
             [call(e), call(stack_info=True), call(exc_info=True)]

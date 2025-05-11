@@ -2,14 +2,19 @@ from logging import Logger
 from urllib.parse import urljoin
 
 from db.config.solr_config import SolrConfig
-from db.services.interfaces.collection_admin_service_interface import (
+from db.data_access.interfaces.collection_admin_service_interface import (
     CollectionAdminServiceInterface,
 )
-from db.utils.request import request
+from db.data_access.interfaces.http_client_interface import SolrHttpClientInterface
 
 
 class CollectionAdminService(CollectionAdminServiceInterface):
-    def __init__(self, cfg: SolrConfig, logger: Logger = None) -> None:
+    def __init__(
+        self,
+        cfg: SolrConfig,
+        http_client: SolrHttpClientInterface,
+        logger: Logger = None,
+    ) -> None:
         """Creates a new Solr Admin obj.
 
         Args:
@@ -21,6 +26,7 @@ class CollectionAdminService(CollectionAdminServiceInterface):
         self.cfg = cfg
         self._admin_url = urljoin(cfg.BASE_URL, "admin/collections")
         self._logger = logger
+        self.http_client = http_client
 
     def create_collection(
         self, collection_name: str, num_shards: int = 1, replica_count: int = 1
@@ -48,7 +54,7 @@ class CollectionAdminService(CollectionAdminServiceInterface):
             f"Creating a new collection with the name {collection_name}, {num_shards} shards and {replica_count} replicas."
         )
 
-        request(params=params, url=self._admin_url, cfg=self.cfg, logger=self._logger)
+        self.http_client.send_request(params=params, url=self._admin_url)
 
         return collection_conn
 
@@ -69,20 +75,16 @@ class CollectionAdminService(CollectionAdminServiceInterface):
         params = {
             "action": "LIST",
         }
-        res = request(
-            params=params, url=self._admin_url, cfg=self.cfg, logger=self._logger
-        )
+        res = self.http_client.send_request(params=params, url=self._admin_url)
 
         for collection in res["collections"]:
             params = {
                 "action": "DELETE",
                 "name": collection,
             }
-            request(
+            self.http_client.send_request(
                 params=params,
                 url=self._admin_url,
-                cfg=self.cfg,
-                logger=self._logger,
             )
             self._logger.info(f"Collection '{collection}' deleted successfully.")
 
@@ -103,9 +105,7 @@ class CollectionAdminService(CollectionAdminServiceInterface):
             "action": "LIST",
         }
         self._logger.info(f"Checking if '{collection_name}' exists.")
-        res = request(
-            params=params, url=self._admin_url, cfg=self.cfg, logger=self._logger
-        )
+        res = self.http_client.send_request(params=params, url=self._admin_url)
         return collection_name in res["collections"]
 
     def get_collection_url(self, collection_name: str):

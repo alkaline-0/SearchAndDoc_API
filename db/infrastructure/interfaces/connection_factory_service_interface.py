@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from logging import Logger
 
-from db.services.interfaces.collection_admin_service_interface import (
+from db.data_access.interfaces.collection_admin_service_interface import (
     CollectionAdminServiceInterface,
 )
 from db.services.interfaces.index_data_service_interface import (
@@ -26,9 +26,9 @@ class ConnectionFactoryServiceInterface(ABC):
     def get_search_client(
         self,
         collection_name: str,
-        collection_url: str,
-        rerank_model: SentenceTransformerInterface,
         retriever_model: SentenceTransformerInterface,
+        rerank_model: SentenceTransformerInterface,
+        collection_url: str,
     ) -> SemanticSearchServiceInterface:
         pass
 

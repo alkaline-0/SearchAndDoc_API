@@ -1,7 +1,8 @@
 import unittest
 from unittest.mock import patch
 
-from db.services.collection_admin_service import CollectionAdminService
+from db.data_access.collection_admin_service import CollectionAdminService
+from db.data_access.solr_http_client import SolrHttpClient
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 from utils.get_logger import get_logger
 
@@ -11,8 +12,10 @@ class TestCollectionAdmin(unittest.TestCase):
     def setUp(self):
         # Create a mock SolrConfig object for testing
         self.mock_config = MockSolrConfig()
+        logger = get_logger()
+        http_client = SolrHttpClient(cfg=self.mock_config, logger=logger)
         self.admin_client = CollectionAdminService(
-            cfg=self.mock_config, logger=get_logger()
+            cfg=self.mock_config, logger=logger, http_client=http_client
         )
 
     def test_successful_collection_creation_2_shards_2_replicas(self):

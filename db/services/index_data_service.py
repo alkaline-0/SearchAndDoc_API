@@ -2,11 +2,11 @@ from logging import Logger
 
 import ray
 
+from db.data_access.interfaces.pysolr_interface import SolrClientInterface
 from db.services.interfaces.index_data_service_interface import (
     IndexDataServiceInterface,
 )
 from db.utils.encode import create_embeddings
-from db.utils.interfaces.pysolr_interface import SolrClientInterface
 from db.utils.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
@@ -77,4 +77,4 @@ class IndexDataService(IndexDataServiceInterface):
         for i, item in enumerate(data):
             item["bert_vector"] = [float(w) for w in embeddings[i]]
 
-        self.solr_client.add(data, softCommit=soft_commit)
+        self.solr_client.add(data, soft_commit=soft_commit)

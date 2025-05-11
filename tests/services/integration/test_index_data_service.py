@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from db.services.connection_factory_service import ConnectionFactoryService
+from db.infrastructure.connection_factory_service import ConnectionFactoryService
 from db.utils.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )

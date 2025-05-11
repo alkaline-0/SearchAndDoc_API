@@ -1,6 +1,6 @@
 from logging import Logger
 
-from db.services.interfaces.collection_admin_service_interface import (
+from db.data_access.interfaces.collection_admin_service_interface import (
     CollectionAdminServiceInterface,
 )
 from db.utils.exceptions import SolrConnectionError, SolrValidationError
