@@ -195,12 +195,8 @@ Execute all tests with:
 python -m pytest
 ```
 
-```
 
 ### Deployment
-
-- The API is available at [http://35.204.26.63:3001](http://35.204.26.63:3001)
-- Interactive API docs: [http://35.204.26.63:3001/docs](http://35.204.26.63:3001/docs)
 
 - The API is available at [http://35.204.26.63:3001](http://35.204.26.63:3001)
 - Interactive API docs: [http://35.204.26.63:3001/docs](http://35.204.26.63:3001/docs)
