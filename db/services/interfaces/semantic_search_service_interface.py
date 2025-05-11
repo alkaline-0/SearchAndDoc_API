@@ -5,6 +5,7 @@ from logging import Logger
 from attr import dataclass
 
 from db.config.solr_config import SolrConfig
+from db.data_access.interfaces.http_client_interface import SolrHttpClientInterface
 from db.data_access.interfaces.pysolr_interface import SolrClientInterface
 from db.utils.interfaces.rerank_strategy_interface import RerankStrategy
 from db.utils.interfaces.retrieval_strategy_interface import RetrievalStrategy
@@ -23,6 +24,7 @@ class SemanticSearchServiceAttrs:
     collection_name: str
     retriever_strategy: RetrievalStrategy
     reranker_strategy: RerankStrategy
+    http_client: SolrHttpClientInterface
 
 
 class SemanticSearchServiceInterface(ABC):

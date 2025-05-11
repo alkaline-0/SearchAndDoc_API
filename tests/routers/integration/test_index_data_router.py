@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-from db.data_access.request import request
+from db.data_access.solr_http_client import SolrHttpClient
 from routers.create_collection_router import CreatecollectionRequest
 from routers.index_data_router import IndexDataRequest
 from tests.db.mocks.mock_solr_config import MockSolrConfig
@@ -33,11 +33,10 @@ class TestIndexDataRouter:
                 )
 
             assert response.status_code == 200
-            rows_count_resp = request(
+            http_client = SolrHttpClient(cfg=MockSolrConfig(), logger=get_logger())
+            rows_count_resp = http_client.send_request(
                 url=f"{mock_cfg.BASE_URL}5678/select?indent=on&q=*:*&wt=json&rows=0",
-                cfg=mock_cfg,
                 params={},
-                logger=get_logger(),
             )
             assert rows_count_resp["response"]["numFound"] == len(documents)
             solr_connection.get_admin_client().delete_all_collections()

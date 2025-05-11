@@ -1,14 +1,15 @@
 from datetime import datetime
+
 from db.utils.interfaces.retrieval_strategy_interface import RetrievalStrategy
 
 
 class SolrKnnSearch(RetrievalStrategy):
-  def __init__(self, solr_client, cfg, logger):
-      self.solr_client = solr_client
-      self.cfg = cfg
-      self._logger = logger
-  
-  def retrieve(
+    def __init__(self, solr_client, cfg, logger):
+        self.solr_client = solr_client
+        self.cfg = cfg
+        self._logger = logger
+
+    def retrieve(
         self, embedding: list, total_rows: int, start_date: datetime, end_date: datetime
     ) -> list:
         """Ray-optimized parallel fetching for large result sets"""
@@ -29,8 +30,8 @@ class SolrKnnSearch(RetrievalStrategy):
                 futures.append(batch_res)
 
         return futures
-  
-  def _fetch_results_in_chunks_with_date(
+
+    def _fetch_results_in_chunks_with_date(
         self,
         start: int,
         q: str,
@@ -66,8 +67,8 @@ class SolrKnnSearch(RetrievalStrategy):
                 stack_info=True,
             )
             raise
-          
-  def _fetch_results_in_chunks(self, start: int, q: str, rows_count: int) -> list:
+
+    def _fetch_results_in_chunks(self, start: int, q: str, rows_count: int) -> list:
         try:
             params = {
                 "q": q,

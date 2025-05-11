@@ -4,7 +4,6 @@ import re
 import ray
 from solrq import Value
 
-from db.data_access.request import request
 from db.services.interfaces.semantic_search_service_interface import (
     SemanticSearchServiceAttrs,
     SemanticSearchServiceInterface,
@@ -15,21 +14,6 @@ from db.utils.exceptions import SolrError
 
 class SemanticSearchService(SemanticSearchServiceInterface):
     def __init__(self, attributes: SemanticSearchServiceAttrs) -> None:
-        """Creates a new semantic search service object.
-
-        Args:
-            solr_client: SolrClientInterface object for Solr operations
-            retriever_model: SentenceTransformerInterface for retrieval
-            rerank_model: SentenceTransformerInterface for re-ranking
-            cfg: configurations for solr connection
-            collection_name: name of the collection to perform search on
-
-        Returns: None
-
-        Raises:
-            SolrError: for malicious queries
-        """
-
         self.solr_client = attributes.solr_client
         self.rerank_model = attributes.rerank_model
         self.retriever_model = attributes.retriever_model
@@ -38,6 +22,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         self._logger = attributes.logger
         self.retriever_strategy = attributes.retriever_strategy
         self.reranker_strategy = attributes.reranker_strategy
+        self.http_client = attributes.http_client
 
     def semantic_search(
         self,
@@ -108,11 +93,9 @@ class SemanticSearchService(SemanticSearchServiceInterface):
 
     def get_rows_count(self) -> int:
         try:
-            rows_count_resp = request(
+            rows_count_resp = self.http_client.send_request(
                 url=f"{self.cfg.BASE_URL}{self.collection_name}/select?indent=on&q=*:*&wt=json&rows=0",
-                cfg=self.cfg,
                 params={},
-                logger=self._logger,
             )
             return rows_count_resp["response"]["numFound"]
         except Exception as e:

@@ -7,6 +7,7 @@ from db.data_access.collection_admin_service import CollectionAdminService
 from db.data_access.interfaces.collection_admin_service_interface import (
     CollectionAdminServiceInterface,
 )
+from db.data_access.solr_http_client import SolrHttpClient
 from db.infrastructure.interfaces.connection_factory_service_interface import (
     ConnectionFactoryServiceInterface,
 )
@@ -35,6 +36,7 @@ class ConnectionFactoryService(ConnectionFactoryServiceInterface):
         self.cfg = cfg
         self._pysolr_obj = None
         self._logger = logger
+        self._http_client = SolrHttpClient(cfg=self.cfg, logger=self._logger)
 
     def _get_connection_obj(self, collection_url: str) -> pysolr.Solr:
         if not self._pysolr_obj:
@@ -47,7 +49,9 @@ class ConnectionFactoryService(ConnectionFactoryServiceInterface):
         return self._pysolr_obj
 
     def get_admin_client(self) -> CollectionAdminServiceInterface:
-        return CollectionAdminService(cfg=self.cfg, logger=self._logger)
+        return CollectionAdminService(
+            cfg=self.cfg, http_client=self._http_client, logger=self._logger
+        )
 
     def get_search_client(
         self,
@@ -73,6 +77,7 @@ class ConnectionFactoryService(ConnectionFactoryServiceInterface):
                 collection_name=collection_name,
                 retriever_strategy=retriever_strategy,
                 reranker_strategy=rerank_strategy,
+                http_client=self._http_client,
             )
         )
 
