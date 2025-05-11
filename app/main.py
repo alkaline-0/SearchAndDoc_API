@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 
+import torch
 import uvicorn
 from fastapi import FastAPI
 
@@ -9,14 +10,15 @@ from routers import create_collection_router, create_document_router, index_data
 from services.config.config import MachineLearningModelConfig
 
 config = {}
+device = "mps" if torch.backends.mps.is_available() else "cpu"
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     cfg = SolrConfig()
-    config["RERANK_MODEL"] = STSentenceTransformer(cfg.RERANK_MODEL_NAME, device="mps")
+    config["RERANK_MODEL"] = STSentenceTransformer(cfg.RERANK_MODEL_NAME, device=device)
     config["RETRIEVER_MODEL"] = STSentenceTransformer(
-        cfg.RETRIEVER_MODEL_NAME, device="mps"
+        cfg.RETRIEVER_MODEL_NAME, device=device
     )
     config["solr_config"] = cfg
     config["ml_config"] = MachineLearningModelConfig()
