@@ -2,6 +2,9 @@ import os
 from time import monotonic
 
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 start = monotonic()
 connected = False
