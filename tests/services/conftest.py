@@ -4,7 +4,7 @@ import fixtup
 import pytest
 import ray
 
-from db.services.connection_factory_service import ConnectionFactoryService
+from db.infrastructure.connection_factory_service import ConnectionFactoryService
 from db.utils.sentence_transformer import STSentenceTransformer
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 from utils.get_logger import get_logger

@@ -4,7 +4,7 @@ from attr import dataclass
 from joblib import Logger
 
 from db.config.solr_config import SolrConfig
-from db.services.connection_factory_service import ConnectionFactoryService
+from db.infrastructure.connection_factory_service import ConnectionFactoryService
 from db.utils.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )

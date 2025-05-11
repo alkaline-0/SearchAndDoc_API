@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-from db.utils.request import request
+from db.data_access.request import request
 from routers.create_collection_router import CreatecollectionRequest
 from routers.index_data_router import IndexDataRequest
 from tests.db.mocks.mock_solr_config import MockSolrConfig

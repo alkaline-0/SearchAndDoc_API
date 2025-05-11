@@ -4,8 +4,8 @@ import fixtup
 import pytest
 import ray
 
-from db.services.connection_factory_service import ConnectionFactoryService
-from db.services.interfaces.connection_factory_service_interface import (
+from db.infrastructure.connection_factory_service import ConnectionFactoryService
+from db.infrastructure.interfaces.connection_factory_service_interface import (
     ConnectionFactoryServiceInterface,
 )
 from db.utils.sentence_transformer import STSentenceTransformer

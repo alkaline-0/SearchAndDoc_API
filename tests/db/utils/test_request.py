@@ -4,8 +4,8 @@ import pytest
 import requests
 
 from db.config.solr_config import SolrConfig
+from db.data_access.request import request
 from db.utils.exceptions import SolrConnectionError, SolrError
-from db.utils.request import request
 from utils.get_logger import get_logger
 
 

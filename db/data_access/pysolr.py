@@ -4,7 +4,7 @@ from typing import Any
 
 import pysolr
 
-from db.utils.interfaces.pysolr_interface import SolrClientInterface
+from db.data_access.interfaces.pysolr_interface import SolrClientInterface
 
 
 class PysolrClient(SolrClientInterface):

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from db.services.collection_admin_service import CollectionAdminService
+from db.data_access.collection_admin_service import CollectionAdminService
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 from utils.get_logger import get_logger
 

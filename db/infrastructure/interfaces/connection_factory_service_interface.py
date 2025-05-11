@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from logging import Logger
 
-from db.services.interfaces.collection_admin_service_interface import (
+from db.data_access.interfaces.collection_admin_service_interface import (
     CollectionAdminServiceInterface,
 )
 from db.services.interfaces.index_data_service_interface import (

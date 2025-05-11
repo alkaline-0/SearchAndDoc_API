@@ -2,10 +2,10 @@ from logging import Logger
 from urllib.parse import urljoin
 
 from db.config.solr_config import SolrConfig
-from db.services.interfaces.collection_admin_service_interface import (
+from db.data_access.interfaces.collection_admin_service_interface import (
     CollectionAdminServiceInterface,
 )
-from db.utils.request import request
+from db.data_access.request import request
 
 
 class CollectionAdminService(CollectionAdminServiceInterface):

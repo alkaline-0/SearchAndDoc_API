@@ -7,16 +7,16 @@ from sentence_transformers import util
 from solrq import Value
 
 from db.config.solr_config import SolrConfig
+from db.data_access.interfaces.pysolr_interface import SolrClientInterface
+from db.data_access.request import request
 from db.services.interfaces.semantic_search_service_interface import (
     SemanticSearchServiceInterface,
 )
 from db.utils.encode import create_embeddings
 from db.utils.exceptions import SolrError
-from db.utils.interfaces.pysolr_interface import SolrClientInterface
 from db.utils.interfaces.sentence_transformer_interface import (
     SentenceTransformerInterface,
 )
-from db.utils.request import request
 
 
 class SemanticSearchService(SemanticSearchServiceInterface):

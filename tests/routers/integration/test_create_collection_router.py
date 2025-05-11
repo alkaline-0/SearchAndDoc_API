@@ -62,7 +62,7 @@ class TestCreateCollectionRouter:
                     test_router.app.state.config, {"solr_config": MockSolrConfig()}
                 ),
                 patch(
-                    "db.services.collection_admin_service.CollectionAdminService.create_collection",
+                    "db.data_access.collection_admin_service.CollectionAdminService.create_collection",
                     side_effect=SolrError(),
                 ),
             ):
