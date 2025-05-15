@@ -60,6 +60,7 @@ class TestCreateDocumentService:
             doc_params = CreateDocumentServiceParams(
                 server_id=collection_name,
                 logger=mock_logger,
+                channel_id=1,
                 topic=topic,
                 retriever_model=retriever_model,
                 rerank_model=rerank_model,
@@ -92,6 +93,7 @@ class TestCreateDocumentService:
             doc_params = CreateDocumentServiceParams(
                 server_id="missing_collection",
                 logger=mock_logger,
+                channel_id=1,
                 topic="test",
                 retriever_model=retriever_model,
                 rerank_model=rerank_model,
@@ -131,6 +133,7 @@ class TestCreateDocumentService:
             # Create params with invalid date range
             ml_config = MachineLearningModelConfig()
             doc_params = CreateDocumentServiceParams(
+                channel_id=1,
                 server_id=collection_name,
                 logger=mock_logger,
                 topic="test",

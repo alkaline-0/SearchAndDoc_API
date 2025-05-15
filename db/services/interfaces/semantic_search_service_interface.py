@@ -39,6 +39,7 @@ class SemanticSearchServiceInterface(ABC):
         self,
         q: str,
         threshold: float,
+        channel_id: int,
         start_date: datetime = None,
         end_date: datetime = None,
     ) -> list[dict]:

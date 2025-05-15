@@ -10,7 +10,12 @@ class SolrKnnSearch(RetrievalStrategy):
         self._logger = logger
 
     def retrieve(
-        self, embedding: list, total_rows: int, start_date: datetime, end_date: datetime
+        self,
+        embedding: list,
+        total_rows: int,
+        channel_id: int,
+        start_date: datetime,
+        end_date: datetime,
     ) -> list:
         """Ray-optimized parallel fetching for large result sets"""
         chunk_size = 5000
@@ -22,6 +27,7 @@ class SolrKnnSearch(RetrievalStrategy):
                 q=knn_q,
                 start=start,
                 rows_count=actual_rows,
+                channel_id=channel_id,
                 start_date=start_date,
                 end_date=end_date,
             )
@@ -36,6 +42,7 @@ class SolrKnnSearch(RetrievalStrategy):
         start: int,
         q: str,
         rows_count: int,
+        channel_id: int,
         start_date: datetime = None,
         end_date: datetime = None,
     ) -> list:
@@ -45,7 +52,7 @@ class SolrKnnSearch(RetrievalStrategy):
 
             if not start_date or not end_date:
                 return self._fetch_results_in_chunks(
-                    start=start, q=q, rows_count=rows_count
+                    start=start, q=q, rows_count=rows_count, channel_id=channel_id
                 )
 
             params = {
@@ -54,8 +61,9 @@ class SolrKnnSearch(RetrievalStrategy):
                 "fl": "message_id, message_content, author_id, channel_id, created_at",
                 "rows": rows_count,
                 "sort": "score desc, message_id asc",
-                "fq": f"(created_at:[{start_date.strftime(solr_date_format)} TO {end_date.strftime(solr_date_format)}] OR (*:* NOT created_at:[* TO *]))",
+                "fq": f"(created_at:[{start_date.strftime(solr_date_format)} TO {end_date.strftime(solr_date_format)}] OR (*:* NOT created_at:[* TO *])) AND channel_id:{channel_id}",
             }
+
             params = {k: v for k, v in params.items() if v is not None}
 
             query_exec = self.solr_client.search(**params)
@@ -68,7 +76,9 @@ class SolrKnnSearch(RetrievalStrategy):
             )
             raise
 
-    def _fetch_results_in_chunks(self, start: int, q: str, rows_count: int) -> list:
+    def _fetch_results_in_chunks(
+        self, start: int, q: str, channel_id: int, rows_count: int
+    ) -> list:
         try:
             params = {
                 "q": q,
@@ -76,6 +86,7 @@ class SolrKnnSearch(RetrievalStrategy):
                 "fl": "message_id, message_content, author_id, channel_id",
                 "rows": rows_count,
                 "sort": "score desc, message_id asc",
+                "fq": f"channel_id:{channel_id}",
             }
             query_exec = self.solr_client.search(**params)
             return query_exec.docs

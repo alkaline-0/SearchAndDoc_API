@@ -38,7 +38,9 @@ class TestSemanticSearchModel:
                 retriever_model=retriever_model,
             ),
         )
-        res = semantic_search_model.semantic_search(q="web backend implementation")
+        res = semantic_search_model.semantic_search(
+            channel_id=1, q="web backend implementation"
+        )
 
         assert res is not None
         assert len(res[0]["message_content"]) > 0
@@ -70,7 +72,7 @@ class TestSemanticSearchModel:
                 ),
             )
             with patch.object(semantic_search_model, "_logger") as mock_logger:
-                semantic_search_model.semantic_search(" ")
+                semantic_search_model.semantic_search(channel_id=1, q=" ")
         mock_logger.error.assert_has_calls([call(f"Invalid Search query:  ")])
         assert "Search query must be at least 4 letters" in str(excinfo.value)
 
@@ -102,7 +104,7 @@ class TestSemanticSearchModel:
                 ),
             )
             with patch.object(semantic_search_model, "_logger") as mock_logger:
-                semantic_search_model.semantic_search("123testback")
+                semantic_search_model.semantic_search(channel_id=1, q="123testback")
             mock_logger.error.assert_has_calls(
                 [call(f"Invalid Search query containing numbers 123testback")]
             )
@@ -135,6 +137,6 @@ class TestSemanticSearchModel:
                 ),
             )
             with patch.object(semantic_search_model, "_logger") as mock_logger:
-                semantic_search_model.semantic_search(q="")
+                semantic_search_model.semantic_search(channel_id=1, q="")
             mock_logger.error.assert_has_calls([call(f"Invalid Search query: ")])
         assert "Search query must be at least 4 letters" in str(exec_info.value)

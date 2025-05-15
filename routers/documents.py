@@ -12,11 +12,12 @@ from services.create_document_service import (
 )
 from utils.get_logger import get_logger
 
-router = APIRouter(tags=["create-document"])
+router = APIRouter(tags=["documents"])
 
 
 class CreateDocumentRequest(BaseModel):
     server_id: Annotated[str, Field(min_length=1, max_length=18)]
+    channel_id: int
     topic: Annotated[str, Field(min_length=1, max_length=35)]
     start_date: str
     end_date: str
@@ -26,7 +27,7 @@ class CreateDocumentResponse(BaseModel):
     generated_document: str
 
 
-@router.post("/create-document", response_model=CreateDocumentResponse)
+@router.post("/documents", response_model=CreateDocumentResponse)
 async def create_document(
     request: Request,
     payload: CreateDocumentRequest,
@@ -46,6 +47,7 @@ async def create_document(
             server_id=payload.server_id,
             topic=payload.topic,
             logger=logger,
+            channel_id=payload.channel_id,
             retriever_model=retriever_model,
             rerank_model=rerank_model,
             start_date=datetime.strptime(payload.start_date, solr_date_format),

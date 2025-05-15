@@ -42,6 +42,13 @@ documents: list[dict] = [
         "created_at": "2025-04-17T10:06:45Z",
     },
     {
+        "message_id": 1000,
+        "author_id": 1022,
+        "channel_id": 2,
+        "message_content": "I wanna learn about microservices!",
+        "created_at": "2025-04-17T10:06:45Z",
+    },
+    {
         "message_id": 7,
         "author_id": 104,
         "channel_id": 1,

@@ -215,15 +215,51 @@ This project provides a backend for managing, indexing, and searching Discord me
 
   - Users can create new Solr collections to organize and store documents.
 
-  - Endpoint: POST /create-collection
+  - Endpoint: POST /collections
 
+  - Request Body:
+  ```
+  {
+    "server_id": "134318725687332051",
+    "shards":1,
+    "replicas":1
+  }
+  ```
+  - response body:
+  ```
+  {
+    "message": "Collection 134318725687332051 created"
+  }
+  ```
   - Status: ✅ Implemented
 
 - Index Documents
 
   - Users can index (add) new documents/messages into a specified Solr collection for later retrieval and search.
 
-  - Endpoint: POST /index-data
+  - Endpoint: POST /collections/{collection_id}  e.g :'/collections/134318725687332051'
+
+  - Request Body:
+    ```
+    {
+      "data": [
+        {
+          "message_id": 4,
+          "author_id": 1001,
+          "channel_id": 2001,
+          "created_at": "2025-05-02T20:16:01.602375Z",
+          "message_content": "I can take the lead on endangered species if we go with MySQL."
+        },
+      ]
+    }
+    ```
+
+    - Response body:
+    ```
+    {
+      "message": "success"
+    }
+    ```
 
   - Status: ✅ Implemented
 
@@ -232,10 +268,25 @@ This project provides a backend for managing, indexing, and searching Discord me
   - Users can create a document out of the indexed discord messages through specifying a topic.
   - Users can create a document out of the indexed discord messages in a specified time period through specifying a topic and a start-date and end-date.
 
-  - Endpoint POST /create-document
+  - Endpoint POST /documents
 
   - Status: ✅ Implemented
 
+  ``` Request:
+  {
+    "server_id": "134318725687332051",
+    "topic": "web application project",
+    "channel_id": 1,
+    "start_date":"2025-04-13T13:24:00Z",
+    "end_date": "2025-04-19T13:24:00Z"
+  }
+  ```
+
+  Response e.g:
+  ```
+  {
+    "generated_document": "# Overview\nThe project aims to build a web application similar to Amazon, with a comprehensive set of features for users to browse and purchase products online. This was discussed in the initial project scope meeting [https://discord.com/channels/134318725687332051/1/1](https://discord.com/channels/134318725687332051/1/1).\n\n## Features\nThe application will include the following key features:\n* A user-friendly frontend built using React, with a mockup of the home page and product page [https://discord.com/channels/134318725687332051/1/3](https://discord.com/channels/134318725687332051/1/3).\n* A robust backend built using Django, with models for users, products, and orders [https://discord.com/channels/134318725687332051/1/4](https://discord.com/channels/134318725687332051/1/4).\n* An admin dashboard, potentially using Django's built-in admin interface [https://discord.com/channels/134318725687332051/1/5](https://discord.com/channels/134318725687332051/1/5).\n* Authentication and authorization using the `djangorestframework-simplejwt` package [https://discord.com/channels/134318725687332051/1/16](https://discord.com/channels/134318725687332051/1/16).\n* A database, with PostgreSQL being considered as the database management system }
+  ```
 ### Internal/Admin Use Cases
 
 
@@ -321,3 +372,4 @@ This project provides a backend for managing, indexing, and searching Discord me
 ---
 ## NOTES:
 - For software modeling and design:[self-assessment essay](https://docs.google.com/document/d/13K_y-UfkHjAFg98gU7aQlARE9pYtL-xETg8AqRJ4rp0/edit?usp=sharing)
+- Screenshots of running application:

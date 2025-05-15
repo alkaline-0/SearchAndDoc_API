@@ -4,9 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-from routers.create_collection_router import CreatecollectionRequest
-from routers.create_document_router import CreateDocumentRequest
-from routers.index_data_router import IndexDataRequest
+from routers.collections import CreatecollectionRequest, IndexDataRequest
+from routers.documents import CreateDocumentRequest
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 from tests.fixtures.test_data.fake_messages import documents
 
@@ -23,21 +22,22 @@ class TestCreateDocumentRouter:
                 test_router.app.state.config, {"solr_config": MockSolrConfig()}
             ):
                 test_router.post(
-                    "/create-collection", content=request_params.model_dump_json()
+                    "/collections", content=request_params.model_dump_json()
                 )
-                index_data_request = IndexDataRequest(server_id="5678", data=documents)
+                index_data_request = IndexDataRequest(data=documents)
                 test_router.post(
-                    "/index-data", content=index_data_request.model_dump_json()
+                    "/collections/5678/", content=index_data_request.model_dump_json()
                 )
                 create_document_params = CreateDocumentRequest(
                     server_id="5678",
+                    channel_id=1,
                     topic="web application project",
                     start_date="2025-04-13T13:24:00Z",
                     end_date="2025-04-19T13:24:00Z",
                 )
 
                 response = test_router.post(
-                    "/create-document", content=create_document_params.model_dump_json()
+                    "/documents", content=create_document_params.model_dump_json()
                 )
 
             assert response.status_code == 200
@@ -54,6 +54,7 @@ class TestCreateDocumentRouter:
         with TestClient(app) as test_router:
             doc_request = CreateDocumentRequest(
                 server_id="5678",
+                channel_id=1,
                 topic="test",
                 start_date="2025-04-19T13:24:00Z",  # Invalid format
                 end_date="2025-04-13T13:24:00Z",
@@ -62,7 +63,7 @@ class TestCreateDocumentRouter:
                 test_router.app.state.config, {"solr_config": MockSolrConfig()}
             ):
                 response = test_router.post(
-                    "/create-document", content=doc_request.model_dump_json()
+                    "/documents", content=doc_request.model_dump_json()
                 )
 
             assert response.status_code == 400
@@ -78,6 +79,7 @@ class TestCreateDocumentRouter:
         app = create_app()
         with TestClient(app) as test_router:
             doc_request = CreateDocumentRequest(
+                channel_id=1,
                 server_id="missing_collection",
                 topic="test",
                 start_date="2025-04-13T13:24:00Z",
@@ -87,7 +89,7 @@ class TestCreateDocumentRouter:
                 test_router.app.state.config, {"solr_config": MockSolrConfig()}
             ):
                 response = test_router.post(
-                    "/create-document", content=doc_request.model_dump_json()
+                    "/documents", content=doc_request.model_dump_json()
                 )
 
             assert response.status_code == 400
@@ -100,6 +102,7 @@ class TestCreateDocumentRouter:
         app = create_app()
         with TestClient(app) as test_router:
             doc_request = CreateDocumentRequest(
+                channel_id=1,
                 server_id="5678",
                 topic="test",
                 start_date="2025-04-20T13:24:00Z",
@@ -112,13 +115,11 @@ class TestCreateDocumentRouter:
                 coll_request = CreatecollectionRequest(
                     server_id="5678", shards=1, replicas=1
                 )
-                test_router.post(
-                    "/create-collection", content=coll_request.model_dump_json()
-                )
+                test_router.post("/collections", content=coll_request.model_dump_json())
 
                 with patch.object(solr_connection, "_logger") as mock_logger:
                     response = test_router.post(
-                        "/create-document", content=doc_request.model_dump_json()
+                        "/documents", content=doc_request.model_dump_json()
                     )
 
             assert response.status_code == 500

@@ -69,7 +69,9 @@ class TestSemanticSearchService:
             ),
             patch.object(search_client, "_logger") as mock_logger,
         ):
-            results = search_client.semantic_search(q="test", threshold=0.1)
+            results = search_client.semantic_search(
+                q="test", threshold=0.1, channel_id=1
+            )
 
         mock_logger.info.assert_has_calls(
             [
@@ -102,6 +104,7 @@ class TestSemanticSearchService:
         with patch.object(search_client, "_logger") as mock_logger:
             index_client.index_data(documents, soft_commit=True)
             res = search_client.semantic_search(
+                channel_id=1,
                 q="web backend implementation",
                 start_date=start_date,  # Future date
                 end_date=end_date,
@@ -124,6 +127,7 @@ class TestSemanticSearchService:
             >= start_date.date()
             and datetime.strptime(item["created_at"], solr_date_format).date()
             <= end_date.date()
+            and item["channel_id"] == 1
             for item in res
         )
 
@@ -139,7 +143,7 @@ class TestSemanticSearchService:
                 collection_name="test",
             )
             with patch.object(search_client, "_logger") as mock_logger:
-                search_client.semantic_search(q="test; DROP test")
+                search_client.semantic_search(channel_id=1, q="test; DROP test")
 
             mock_logger.error.assert_has_calls(
                 [
@@ -180,6 +184,6 @@ class TestSemanticSearchService:
             solr_mock.side_effect = e
 
             index_client.index_data(documents, soft_commit=True)
-            search_client.semantic_search(q="web backend implementation")
+            search_client.semantic_search(channel_id=1, q="web backend implementation")
         mock_logger.error.assert_has_calls([call(e, stack_info=True, exc_info=True)])
         assert "Something went wrong!" in str(excinfo.value)

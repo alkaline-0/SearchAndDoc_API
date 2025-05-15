@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from db.config.solr_config import SolrConfig
 from db.utils.sentence_transformer import STSentenceTransformer
-from routers import create_collection_router, create_document_router, index_data_router
+from routers import collections, documents
 from services.config.config import MachineLearningModelConfig
 
 config = {}
@@ -33,9 +33,8 @@ def create_app() -> FastAPI:
     app.state.config = config
 
     # routers
-    app.include_router(index_data_router.router)
-    app.include_router(create_collection_router.router)
-    app.include_router(create_document_router.router)
+    app.include_router(collections.router)
+    app.include_router(documents.router)
 
     return app
 

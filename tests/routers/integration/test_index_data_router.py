@@ -5,8 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from db.data_access.solr_http_client import SolrHttpClient
-from routers.create_collection_router import CreatecollectionRequest
-from routers.index_data_router import IndexDataRequest
+from routers.collections import CreatecollectionRequest, IndexDataRequest
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 from tests.fixtures.test_data.fake_messages import documents
 from utils.get_logger import get_logger
@@ -25,11 +24,11 @@ class TestIndexDataRouter:
                 test_router.app.state.config, {"solr_config": MockSolrConfig()}
             ):
                 test_router.post(
-                    "/create-collection", content=request_params.model_dump_json()
+                    "/collections", content=request_params.model_dump_json()
                 )
-                index_data_request = IndexDataRequest(server_id="5678", data=documents)
+                index_data_request = IndexDataRequest(data=documents)
                 response = test_router.post(
-                    "/index-data", content=index_data_request.model_dump_json()
+                    "/collections/5678", content=index_data_request.model_dump_json()
                 )
 
             assert response.status_code == 200
@@ -46,14 +45,12 @@ class TestIndexDataRouter:
         """Test redirect when collection doesn't exist"""
         app = create_app()
         with TestClient(app) as test_router:
-            index_data_request = IndexDataRequest(
-                server_id="missing_collection", data=documents
-            )
+            index_data_request = IndexDataRequest(data=documents)
             with patch.dict(
                 test_router.app.state.config, {"solr_config": MockSolrConfig()}
             ):
                 response = test_router.post(
-                    "/index-data", content=index_data_request.model_dump_json()
+                    "/collections/3212", content=index_data_request.model_dump_json()
                 )
 
             assert response.status_code == 404
@@ -71,14 +68,12 @@ class TestIndexDataRouter:
                 test_router.app.state.config, {"solr_config": MockSolrConfig()}
             ):
                 test_router.post(
-                    "/create-collection", content=create_request.model_dump_json()
+                    "/collections", content=create_request.model_dump_json()
                 )
 
-            index_data_request = IndexDataRequest(
-                server_id="error_collection", data=[{}]
-            )
+            index_data_request = IndexDataRequest(data=[{}])
             response = test_router.post(
-                "/index-data", content=index_data_request.model_dump_json()
+                "/collections/1234", content=index_data_request.model_dump_json()
             )
 
             assert response.status_code == 500

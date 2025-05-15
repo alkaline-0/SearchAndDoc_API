@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from db.utils.exceptions import SolrError
-from routers.create_collection_router import CreatecollectionRequest
+from routers.collections import CreatecollectionRequest
 from tests.db.mocks.mock_solr_config import MockSolrConfig
 
 
@@ -21,7 +21,7 @@ class TestCreateCollectionRouter:
                 test_router.app.state.config, {"solr_config": MockSolrConfig()}
             ):
                 response = test_router.post(
-                    "/create-collection", content=request_params.model_dump_json()
+                    "/collections", content=request_params.model_dump_json()
                 )
 
                 admin_client = solr_connection.get_admin_client()
@@ -41,10 +41,10 @@ class TestCreateCollectionRouter:
                 test_router.app.state.config, {"solr_config": MockSolrConfig()}
             ):
                 test_router.post(
-                    "/create-collection", content=request_params.model_dump_json()
+                    "/collections", content=request_params.model_dump_json()
                 )
                 response = test_router.post(
-                    "/create-collection", content=request_params.model_dump_json()
+                    "/collections", content=request_params.model_dump_json()
                 )
             assert response.status_code == 400
             assert response.json() == {"detail": "Collection already exists"}
@@ -67,7 +67,7 @@ class TestCreateCollectionRouter:
                 ),
             ):
                 response = test_router.post(
-                    "/create-collection", content=request_params.model_dump_json()
+                    "/collections", content=request_params.model_dump_json()
                 )
                 admin_client = solr_connection.get_admin_client()
 

@@ -27,6 +27,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
     def semantic_search(
         self,
         q: str,
+        channel_id: int,
         threshold: float = 0.0,
         start_date: datetime.datetime = None,
         end_date: datetime.datetime = None,
@@ -45,6 +46,7 @@ class SemanticSearchService(SemanticSearchServiceInterface):
         [docs] = self.retriever_strategy.retrieve(
             embedding=ray.get(retriever_future),
             total_rows=self.get_rows_count(),
+            channel_id=channel_id,
             start_date=start_date,
             end_date=end_date,
         )

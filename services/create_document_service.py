@@ -25,6 +25,7 @@ class CreateDocumentServiceParams:
     server_id: str
     logger: Logger
     topic: str
+    channel_id: int
     retriever_model: SentenceTransformerInterface
     rerank_model: SentenceTransformerInterface
     cfg: SolrConfig
@@ -63,7 +64,10 @@ async def create_document_service(params: CreateCollectionServiceParams) -> str:
 
     try:
         search_result = semantic_search_model.semantic_search(
-            q=params.topic, start_date=params.start_date, end_date=params.end_date
+            q=params.topic,
+            channel_id=params.channel_id,
+            start_date=params.start_date,
+            end_date=params.end_date,
         )
         params.logger.info(f"Retrieved {len(search_result)} documents")
     except Exception as e:

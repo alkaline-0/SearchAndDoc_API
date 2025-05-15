@@ -48,7 +48,7 @@ class TestCreateDocumentationContentService:
 
         index_client.index_data(documents, soft_commit=True)
         search_result = search_client.semantic_search(
-            "web development project", threshold=0.1
+            "web development project", threshold=0.1, channel_id=1
         )
 
         groq_obj = AsyncGroqModel(MachineLearningModelConfig())
@@ -94,7 +94,7 @@ class TestCreateDocumentationContentService:
 
         index_client.index_data(documents, soft_commit=True)
         search_result = search_client.semantic_search(
-            "web development project", threshold=0.1
+            "web development project", threshold=0.1, channel_id=1
         )
 
         groq_obj = AsyncGroqModel(cfg=MachineLearningModelConfig())

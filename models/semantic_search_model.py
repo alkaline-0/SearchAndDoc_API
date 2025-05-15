@@ -20,6 +20,7 @@ class SemanticSearchModel:
     def semantic_search(
         self,
         q: str,
+        channel_id: int,
         threshold: float = 0.0,
         start_date: datetime = None,
         end_date: datetime = None,
@@ -27,7 +28,11 @@ class SemanticSearchModel:
         self._query_valid(q=q)
 
         return self._semantic_search_obj.semantic_search(
-            q=q.lower(), threshold=threshold, start_date=start_date, end_date=end_date
+            q=q.lower(),
+            channel_id=channel_id,
+            threshold=threshold,
+            start_date=start_date,
+            end_date=end_date,
         )
 
     def get_rows_count(self):
